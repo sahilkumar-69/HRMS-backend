@@ -1,11 +1,12 @@
+import { isUserExists } from "../utils/IsUserExists.util";
 
 const userLogin = async (req, res) => {
   try {
-    const { Phone, Password, Email } = req.body;
+    const { Password, Email } = req.body;
 
-    if (!Phone && !Email) {
+    if (!Email) {
       return res.status(404).json({
-        message: "Email or Phone is required",
+        message: "Email is required",
       });
     }
     if (!Password || Password.length < 8) {
@@ -14,7 +15,7 @@ const userLogin = async (req, res) => {
       });
     }
 
-    const isExists = await isUserExists(Email, Phone);
+    const isExists = await isUserExists(Email);
 
     if (!isExists) {
       return res.status(404).json({
@@ -22,9 +23,6 @@ const userLogin = async (req, res) => {
         message: "User not found please signup",
       });
     }
-
-    // console.log(isExists);
-    // console.table([isExists,Password])
 
     const isPasswordMatch = await isExists.comparePassword(Password);
 
@@ -43,7 +41,7 @@ const userLogin = async (req, res) => {
         Name: isExists.Name,
         Email: isExists.Email,
         Phone: isExists.Phone,
-        OrderHistory: isExists.OrderHistory,
+        Role: isExists.Role,
       },
       accessToken,
     });
@@ -54,3 +52,5 @@ const userLogin = async (req, res) => {
     });
   }
 };
+
+export { userLogin };
