@@ -8,6 +8,7 @@ app.use(cors())
 
 app.get("/", (req, res) => {
   res.send("api is live");
+  
 });
 
 app.listen(4343, (err) => {
