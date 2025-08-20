@@ -1,8 +1,7 @@
 import mongoose, { Schema } from "mongoose";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-// import { addressModel } from "./address.js";
-// import { emergencyContactModel } from "./emergencyContact.js";
+ 
 
 const userSchema = new mongoose.Schema(
   {
@@ -26,11 +25,17 @@ const userSchema = new mongoose.Schema(
 
     Phone: { type: String },
 
+    Profile_url: String,
+
+    Profile_Public_id: String,
+
     Dob: { type: Date },
     // Job-related info
     Department: { type: String, required: true },
 
-    Designation: { type: String },
+    Tasks: [{ type: mongoose.Schema.Types.ObjectId, ref: "Task" }],
+
+    Designation: { type: String, require: true },
 
     JoiningDate: { type: Date, default: Date.now },
     // Security
@@ -41,12 +46,19 @@ const userSchema = new mongoose.Schema(
     Permissions: [{ type: String }], // fine-grained, e.g., ["manage_users", "approve_leave"]
     // Relational fields
     // ManagerId: { type: Schema.Types.ObjectId, ref: "User" }, // self-reference for reporting
+    Address: { type: String, require: true },
 
-    Address: { type: mongoose.Schema.Types.ObjectId, ref: "addressModel" },
-
-    EmergencyContacts: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "emergencyContactModel",
+    EmergencyName: {
+      type: String,
+      require: true,
+    },
+    EmergencyRelation: {
+      type: String,
+      require: true,
+    },
+    EmergencyPhone: {
+      type: String,
+      require: true,
     },
 
     Token: {
@@ -56,7 +68,7 @@ const userSchema = new mongoose.Schema(
 
     Role: {
       type: String,
-      enum: ["HR", "EMPLOYEE", "TL", "OWNER"],
+      enum: ["HR", "EMPLOYEE", "TL", "ADMIN"],
       require: true,
     },
 

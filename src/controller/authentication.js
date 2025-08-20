@@ -1,4 +1,7 @@
 import { userModel } from "../models/User.js";
+import uploadOnCloudinary, {
+  deleteFromCloudinary,
+} from "../utils/Cloudinary.js";
 import { isUserExists } from "../utils/IsUserExists.js";
 import {
   addAddress,
@@ -64,6 +67,8 @@ const userLogin = async (req, res) => {
 };
 
 const userSignUp = async (req, res) => {
+  console.log(req.body);
+
   const {
     FirstName,
     LastName,
@@ -74,8 +79,10 @@ const userSignUp = async (req, res) => {
     Designation,
     Permissions,
     Address,
-    EmergencyContacts,
     Role,
+    EmergencyPhone,
+    EmergencyName,
+    EmergencyRelation,
     Password,
   } = req.body;
 
@@ -89,6 +96,10 @@ const userSignUp = async (req, res) => {
       Department,
       Designation,
       Role,
+      Address,
+      EmergencyPhone,
+      EmergencyName,
+      EmergencyRelation,
       Password,
     ].some((ele) => {
       return ele == undefined || ele == ""
@@ -118,20 +129,21 @@ const userSignUp = async (req, res) => {
       });
     }
 
-    const addressStatus = await addAddress(Address);
-
-    if (!addressStatus.success) {
-      return res.status(400).json({
-        message: addressStatus.message,
+    if (!req.file || !req.file.path) {
+      return req.status(404).json({
+        message: "Profile Photo is not uploaded (file path missing)",
       });
     }
+    const fileStr = req.file.path;
 
-    const emergencyStatus = await addEmergencyDetails(EmergencyContacts);
+    const cloudRes = await uploadOnCloudinary(fileStr);
 
-    if (!emergencyStatus.success) {
-      return res.status(400).json({
-        message: emergencyStatus.message,
-      });
+    console.log(cloudRes);
+
+    if (!cloudRes) {
+      return res
+        .status(400)
+        .json({ message: "could not uploaded to cloudinary", success: false });
     }
 
     const user = new userModel({
@@ -141,10 +153,14 @@ const userSignUp = async (req, res) => {
       Phone,
       Dob,
       Department,
+      Profile_url: cloudRes.response.secure_url,
+      Profile_Public_id: cloudRes.response.public_id,
       Designation,
       Permissions,
-      Address: addressStatus.address,
-      EmergencyContacts: emergencyStatus.detailId,
+      Address,
+      EmergencyPhone,
+      EmergencyName,
+      EmergencyRelation,
       Role,
       Password,
     });
@@ -154,7 +170,6 @@ const userSignUp = async (req, res) => {
     user.Token = accessToken;
 
     const savedUser = await user.save();
-    console.log(savedUser);
 
     if (!savedUser)
       return res.status(500).json({
@@ -179,7 +194,7 @@ const userSignUp = async (req, res) => {
 
 const updateUser = async (req, res) => {
   try {
-    const { Address, EmergencyContacts, ...updates } = req.body; // fields to update (e.g. { address: {...} })
+    const updates = req.body; // fields to update (e.g. { address: {...} })
 
     // Ensure HR/Owner cannot update restricted fields
     const restricted = ["Password", "Role", "Permissions"];
@@ -187,33 +202,31 @@ const updateUser = async (req, res) => {
       if (updates[field]) delete updates[field];
     });
 
-    if (Address) {
-      const updatedAdd = await updateAddress(req.user.Address, Address);
+    if (req.file && req.file.path) {
+      const deleteCurrentPhoto = await deleteFromCloudinary(
+        req.user.Profile_Public_id
+      );
 
-      if (!updatedAdd.success) {
-        return res.status(404).json({ message: updatedAdd.message });
+      if (!deleteCurrentPhoto.success) {
+        return res.status(500).json({
+          message: deleteCurrentPhoto.message,
+        });
+      }
+
+      const updatedURL = await uploadOnCloudinary(req.file.path);
+
+      if (!updatedURL.success) {
+        return res.status(404).json({ message: updatedURL.message });
       }
 
       await userModel.findByIdAndUpdate(
         req.user._id,
-        { $set: { Address: updatedAdd.id } },
-        { new: true, runValidators: true }
-      );
-    }
-
-    if (EmergencyContacts) {
-      const updatedDetails = await updateEmergencyDetails(
-        req.user.EmergencyContacts,
-        EmergencyContacts
-      );
-
-      if (!updatedDetails.success) {
-        return res.status(404).json({ message: updatedDetails.message });
-      }
-
-      await userModel.findByIdAndUpdate(
-        req.user._id,
-        { $set: { EmergencyContacts: updatedDetails.id } },
+        {
+          $set: {
+            Profile_url: updatedURL.response.public_id,
+            Profile_Public_id: updatedURL.response.secure_url,
+          },
+        },
         { new: true, runValidators: true }
       );
     }
@@ -245,29 +258,15 @@ const deleteUser = async (req, res) => {
     if (id && id.trim()) {
       const isDeleted = await userModel.findByIdAndDelete(id);
 
+      const cloudDelete = await deleteFromCloudinary(
+        isDeleted.Profile_Public_id
+      );
+
+      console.log(cloudDelete);
+
       if (!isDeleted) {
         return res.status(400).json({
           message: "can't delete from database",
-          success: false,
-        });
-      }
-
-      const isAddressRemoved = await deleteAddress(isDeleted.Address);
-
-      if (!isAddressRemoved) {
-        return res.status(400).json({
-          message: isAddressRemoved.message,
-          success: false,
-        });
-      }
-
-      const isContactRemoved = await deleteEmergencyDetails(
-        isDeleted.EmergencyContacts
-      );
-
-      if (!isContactRemoved) {
-        return res.status(400).json({
-          message: isContactRemoved.message,
           success: false,
         });
       }
@@ -314,4 +313,27 @@ const getUserById = async (req, res) => {
   }
 };
 
-export { userLogin, userSignUp, updateUser, deleteUser, getUserById };
+const assignTask = async (taskId, to) => {
+  try {
+    const updatedUser = await userModel
+      .findByIdAndUpdate(
+        to,
+        { $addToSet: { Tasks: taskId } }, // prevents duplicates
+        { new: true } // return updated user
+      )
+      .populate("Tasks", "title description priority due_date status");
+
+    return updatedUser;
+  } catch (error) {
+    throw new Error("Error assigning task: " + error.message);
+  }
+};
+
+export {
+  userLogin,
+  userSignUp,
+  updateUser,
+  deleteUser,
+  getUserById,
+  assignTask,
+};
