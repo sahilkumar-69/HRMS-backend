@@ -1,5 +1,5 @@
 // controllers/taskController.js
-import Task from "../models/Task.js";
+import Task from "../models/task.js";
 import { userModel as User } from "../models/User.js";
 
 // Create a new task
@@ -126,4 +126,3 @@ const getTeams = async (req, res) => {
 const updateTask = async (req, res) => {};
 
 export { createTask, getTasks, deleteTasks, createTeam, getTeams, updateTask };
-// HR/Owner updates employee details
