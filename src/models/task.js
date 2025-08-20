@@ -12,15 +12,27 @@ const TaskSchema = new Schema(
       enum: ["low", "medium", "high", "urgent"],
       default: "medium",
     },
+    docs: [{ type: String }],
 
+    startDate: { type: Date, required: true },
     dueDate: { type: Date, required: true },
-
     // Assignee is a reference to a User
     assignee: {
-      // type: Schema.Types.ObjectId,
-      // ref: "users",
-      // required: true,
-      type: String,
+      type: Schema.Types.ObjectId,
+      ref: "users",
+      required: true,
+    },
+
+    // type: {
+    //   type: String,
+    //   enum: ["meeting", "task", "holiday", "event"],
+    //   default: "task",
+    // },
+
+    assigner: {
+      type: Schema.Types.ObjectId,
+      ref: "users",
+      required: true,
     },
 
     status: {
@@ -30,9 +42,8 @@ const TaskSchema = new Schema(
     },
 
     createdBy: {
-      // type: Schema.Types.ObjectId,
-      // ref: "users", // person who created the task (HR, TL, etc.)
-      type: String,
+      type: Schema.Types.ObjectId,
+      ref: "users", // person who created the task (HR, TL, etc.)
     },
   },
   { timestamps: true }
