@@ -5,29 +5,30 @@ const { Schema } = mongoose;
 const TaskSchema = new Schema(
   {
     title: { type: String, required: true },
-    description: { type: String },
+    description: { type: String, required: true },
 
     priority: {
       type: String,
       enum: ["low", "medium", "high", "urgent"],
       default: "medium",
     },
-    docs: [{ type: String }],
+    docs: [
+      {
+        public_id: { type: String },
+        secure_url: { type: String },
+      },
+    ],
 
-    startDate: { type: Date, required: true },
+    startDate: { type: Date, default: Date.now() },
     dueDate: { type: Date, required: true },
     // Assignee is a reference to a User
-    assignee: {
-      type: Schema.Types.ObjectId,
-      ref: "users",
-      required: true,
-    },
-
-    // type: {
-    //   type: String,
-    //   enum: ["meeting", "task", "holiday", "event"],
-    //   default: "task",
-    // },
+    assignee: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "users",
+        required: true,
+      },
+    ],
 
     assigner: {
       type: Schema.Types.ObjectId,
@@ -37,13 +38,8 @@ const TaskSchema = new Schema(
 
     status: {
       type: String,
-      enum: ["todo", "in-progress", "review", "done"],
+      enum: ["todo", "pending", "in-progress", "review"],
       default: "todo",
-    },
-
-    createdBy: {
-      type: Schema.Types.ObjectId,
-      ref: "users", // person who created the task (HR, TL, etc.)
     },
   },
   { timestamps: true }

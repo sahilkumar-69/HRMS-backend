@@ -12,7 +12,7 @@ const TeamSchema = new Schema(
     // Members of the team
     members: [{ type: Schema.Types.ObjectId, ref: "User" }],
 
-    createdBy: { type: Schema.Types.ObjectId, ref: "User" }
+    createdBy: { type: Schema.Types.ObjectId, ref: "User" },
   },
   { timestamps: true }
 );

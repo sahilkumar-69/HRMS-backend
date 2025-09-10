@@ -9,12 +9,12 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const uploadOnCloudinary = async (tempLink) => {
+const uploadOnCloudinary = async (tempLink, folder_name) => {
   try {
     const response = await cloudinary.uploader.upload(tempLink, {
-      folder: "HRMS_BACKEND_PROFILE_PHOTOS",
+      folder: folder_name || "HRMS_BACKEND_PROFILE_PHOTOS",
       resource_type: "auto",
-      timeout: 6000,
+      timeout: 10000,
     });
     fs.unlinkSync(tempLink);
 
