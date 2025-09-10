@@ -1,0 +1,19 @@
+import { Router } from "express";
+import {
+  checkIn,
+  checkOut,
+  getAttendance,
+  updateAttendance,
+} from "../controller/Attendance.controller.js";
+
+const AttendanceRouter = Router();
+
+AttendanceRouter.route("/:userId").get(getAttendance);
+
+AttendanceRouter.route("/checkin").post(checkIn);
+
+AttendanceRouter.route("/update-attendance").patch(updateAttendance);
+
+AttendanceRouter.route("/checkout").post(checkOut);
+
+export default AttendanceRouter;

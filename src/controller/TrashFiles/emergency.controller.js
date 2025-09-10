@@ -1,4 +1,4 @@
-import { emergencyContactModel } from "../models/emergencyContact.js";
+import { emergencyContactModel } from "../../models/emergencyContact.js";
 
 const addEmergencyDetails = async (eme_details) => {
   try {

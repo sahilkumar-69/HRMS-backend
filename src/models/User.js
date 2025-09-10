@@ -19,7 +19,7 @@ const userSchema = new mongoose.Schema(
     // Basic info
     FirstName: { type: String, required: true },
 
-    LastName: { type: String, required: true },
+    LastName: { type: String },
 
     Email: { type: String, required: true, unique: true, lowercase: true },
 
@@ -48,14 +48,18 @@ const userSchema = new mongoose.Schema(
     // ManagerId: { type: Schema.Types.ObjectId, ref: "User" }, // self-reference for reporting
     Address: { type: String, require: true },
 
+    AllowedTabs: [{ type: String }],
+
     EmergencyName: {
       type: String,
       require: true,
     },
+
     EmergencyRelation: {
       type: String,
       require: true,
     },
+
     EmergencyPhone: {
       type: String,
       require: true,
@@ -95,14 +99,14 @@ userSchema.methods.comparePassword = async function (password) {
 userSchema.methods.generateAccessToken = function () {
   return jwt.sign(
     {
-      EmployeeId: this.EmployeeId,
+      _id: this._id,
       Permissions: this.Permissions,
       Email: this.Email,
       Role: this.Role,
     },
     process.env.ACCESS_TOKEN,
     {
-      expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
+      expiresIn: "1h" || process.env.ACCESS_TOKEN_EXPIRY,
     }
   );
 };

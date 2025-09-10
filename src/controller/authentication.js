@@ -1,30 +1,27 @@
 import { userModel } from "../models/User.js";
+import fs from "fs";
+
 import uploadOnCloudinary, {
   deleteFromCloudinary,
 } from "../utils/Cloudinary.js";
 import { isUserExists } from "../utils/IsUserExists.js";
-import {
-  addAddress,
-  deleteAddress,
-  updateAddress,
-} from "./address.controller.js";
-import {
-  addEmergencyDetails,
-  deleteEmergencyDetails,
-  updateEmergencyDetails,
-} from "./emergency.controller.js";
 
 const userLogin = async (req, res) => {
   try {
     const { Role, Password, Email } = req.body;
 
     if (!Role && !Email) {
-      return res.status(404).json({
+      return res.status(400).json({
+        success: false,
+
         message: "Email or Role is required",
       });
     }
+
     if (!Password || Password.length < 8) {
-      return res.status(404).json({
+      return res.status(403).json({
+        success: false,
+
         message: "Password is required and min 8 character required",
       });
     }
@@ -33,8 +30,15 @@ const userLogin = async (req, res) => {
 
     if (!isExists) {
       return res.status(404).json({
-        success: true,
-        message: "User not found please signup",
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    if (isExists.Role != Role) {
+      return res.status(403).json({
+        success: false,
+        message: "No user with this role",
       });
     }
 
@@ -42,20 +46,20 @@ const userLogin = async (req, res) => {
 
     if (!isPasswordMatch) {
       return res.status(401).json({
-        message: "password don't match ",
+        success: false,
+
+        message: "password don't match",
       });
     }
 
     const accessToken = await isExists.generateAccessToken();
 
+    isExists.Token = accessToken;
     return res.status(200).json({
       success: true,
       message: "logged in ",
-      user: {
-        Name: isExists.Name,
-        Email: isExists.Email,
-        Role: isExists.Role,
-      },
+
+      isExists,
       accessToken,
     });
   } catch (error) {
@@ -67,8 +71,6 @@ const userLogin = async (req, res) => {
 };
 
 const userSignUp = async (req, res) => {
-  console.log(req.body);
-
   const {
     FirstName,
     LastName,
@@ -84,12 +86,14 @@ const userSignUp = async (req, res) => {
     EmergencyName,
     EmergencyRelation,
     Password,
+    AllowedTabs,
   } = req.body;
+
+  console.log(req.body);
 
   if (
     [
       FirstName,
-      LastName,
       Email,
       Phone,
       Dob,
@@ -110,12 +114,14 @@ const userSignUp = async (req, res) => {
     })
   ) {
     return res.status(404).json({
+      success: false,
       message: "all fields are required",
     });
   }
 
   if (Password.length < 8) {
-    return res.status(404).json({
+    return res.status(400).json({
+      success: false,
       message: "Password is required and min 8 character required",
     });
   }
@@ -124,23 +130,23 @@ const userSignUp = async (req, res) => {
     const isExists = await isUserExists(Email, Role);
 
     if (isExists) {
-      return res.status(200).json({
+      return res.status(403).json({
+        success: false,
         message: "Email already in use",
       });
     }
 
     if (!req.file || !req.file.path) {
-      return req.status(404).json({
+      return res.status(404).json({
         message: "Profile Photo is not uploaded (file path missing)",
       });
     }
-    const fileStr = req.file.path;
+    const fileStr = req.file?.path;
 
-    const cloudRes = await uploadOnCloudinary(fileStr);
-
-    console.log(cloudRes);
+    var cloudRes = await uploadOnCloudinary(fileStr);
 
     if (!cloudRes) {
+      cloudRes && (await deleteFromCloudinary(cloudRes.response.public_id));
       return res
         .status(400)
         .json({ message: "could not uploaded to cloudinary", success: false });
@@ -162,6 +168,7 @@ const userSignUp = async (req, res) => {
       EmergencyName,
       EmergencyRelation,
       Role,
+      AllowedTabs: AllowedTabs,
       Password,
     });
 
@@ -171,11 +178,14 @@ const userSignUp = async (req, res) => {
 
     const savedUser = await user.save();
 
-    if (!savedUser)
+    if (!savedUser) {
+      cloudRes && (await deleteFromCloudinary(cloudRes.response.public_id));
+
       return res.status(500).json({
         success: false,
         message: "Can't save to db",
       });
+    }
 
     res.status(201).json({
       success: true,
@@ -184,6 +194,8 @@ const userSignUp = async (req, res) => {
       // accessToken,
     });
   } catch (error) {
+    cloudRes && (await deleteFromCloudinary(cloudRes.response.public_id));
+
     return res.status(500).json({
       success: false,
       message: "Can't save to db",
@@ -284,13 +296,34 @@ const deleteUser = async (req, res) => {
   }
 };
 
+const getAllEmp = async (req, res) => {
+  try {
+    const Emps = await userModel.find().select("-Password");
+
+    const allEmployees = {
+      HR: Emps.filter((emp) => emp.Role == "HR"),
+      ADMIN: Emps.filter((emp) => emp.Role == "ADMIN"),
+      TL: Emps.filter((emp) => emp.Role == "TL"),
+      EMPLOYEE: Emps.filter((emp) => emp.Role == "EMPLOYEE"),
+    };
+    return res.status(200).json({
+      message: "Emp fetched",
+      success: true,
+      data: allEmployees,
+    });
+  } catch (error) {
+    res.json(500).json({
+      error,
+      message:error.message
+    })
+  }
+};
+
 const getUserById = async (req, res) => {
   try {
     const { id } = req.params;
     if (id && id.trim()) {
-      const user = await userModel
-        .findById(id)
-        .select("-Password -Token -EmergencyContacts -Address -_id");
+      const user = await userModel.findById(id).select("  -Token  -_id");
 
       if (!user) {
         return res.status(404).json({
@@ -313,27 +346,11 @@ const getUserById = async (req, res) => {
   }
 };
 
-const assignTask = async (taskId, to) => {
-  try {
-    const updatedUser = await userModel
-      .findByIdAndUpdate(
-        to,
-        { $addToSet: { Tasks: taskId } }, // prevents duplicates
-        { new: true } // return updated user
-      )
-      .populate("Tasks", "title description priority due_date status");
-
-    return updatedUser;
-  } catch (error) {
-    throw new Error("Error assigning task: " + error.message);
-  }
-};
-
 export {
   userLogin,
   userSignUp,
   updateUser,
   deleteUser,
   getUserById,
-  assignTask,
+  getAllEmp,
 };
