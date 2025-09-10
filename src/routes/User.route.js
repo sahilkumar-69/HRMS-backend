@@ -28,6 +28,6 @@ Route.route("/delete-user").delete(deleteUser);
 
 Route.route("/user/:id").get(getUserById);
 
-Route.route("/user").get(findUser, getAllEmp);
+Route.route("/user").get( getAllEmp);
  
 export { Route };
