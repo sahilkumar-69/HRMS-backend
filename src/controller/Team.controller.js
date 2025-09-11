@@ -21,7 +21,9 @@ const createTeam = async (req, res) => {
     });
 
     await team.save();
-    res.status(201).json({ message: "Team created successfully", team });
+    res
+      .status(201)
+      .json({ success: true, message: "Team created successfully", team });
   } catch (error) {
     res
       .status(500)
@@ -35,7 +37,7 @@ const getTeams = async (req, res) => {
       .populate("lead", "FirstName LastName Email Role")
       .populate("members", "FirstName LastName Email Role");
 
-    res.json(teams);
+    res.status(201).json({ Success: true, teams });
   } catch (error) {
     res
       .status(500)
@@ -71,7 +73,7 @@ const getTeamById = async (req, res) => {
         .json({ message: "Team not found or access denied" });
     }
 
-    res.json(team);
+    res.status(201).json({ success: true, team });
   } catch (error) {
     res
       .status(500)

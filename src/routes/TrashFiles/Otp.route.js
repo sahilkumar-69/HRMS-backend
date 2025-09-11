@@ -1,6 +1,6 @@
 import { Router } from "express";
 
-import { getOtp, verifyOtpController } from "../controller/Otp.controller.js";
+import { getOtp, verifyOtpController } from "../../controller/Otp.controller.js";
 
 const OtpRoutes = Router();
 

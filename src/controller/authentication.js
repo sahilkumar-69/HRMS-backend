@@ -85,6 +85,7 @@ const userSignUp = async (req, res) => {
     EmergencyPhone,
     EmergencyName,
     EmergencyRelation,
+    JoiningDate,
     Password,
     AllowedTabs,
   } = req.body;
@@ -105,6 +106,7 @@ const userSignUp = async (req, res) => {
       EmergencyName,
       EmergencyRelation,
       Password,
+      JoiningDate,
     ].some((ele) => {
       return ele == undefined || ele == ""
         ? true
@@ -164,6 +166,7 @@ const userSignUp = async (req, res) => {
       Designation,
       Permissions,
       Address,
+      JoiningDate,
       EmergencyPhone,
       EmergencyName,
       EmergencyRelation,
@@ -270,11 +273,8 @@ const deleteUser = async (req, res) => {
     if (id && id.trim()) {
       const isDeleted = await userModel.findByIdAndDelete(id);
 
-      const cloudDelete = await deleteFromCloudinary(
-        isDeleted.Profile_Public_id
-      );
-
-      console.log(cloudDelete);
+      if (isDeleted?.Profile_Public_id)
+        await deleteFromCloudinary(isDeleted.Profile_Public_id);
 
       if (!isDeleted) {
         return res.status(400).json({
@@ -314,8 +314,8 @@ const getAllEmp = async (req, res) => {
   } catch (error) {
     res.json(500).json({
       error,
-      message:error.message
-    })
+      message: error.message,
+    });
   }
 };
 
