@@ -106,7 +106,7 @@ userSchema.methods.generateAccessToken = function () {
     },
     process.env.ACCESS_TOKEN,
     {
-      expiresIn: "1h" || process.env.ACCESS_TOKEN_EXPIRY,
+      expiresIn: "1d" || process.env.ACCESS_TOKEN_EXPIRY,
     }
   );
 };

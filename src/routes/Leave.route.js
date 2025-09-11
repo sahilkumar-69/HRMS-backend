@@ -6,6 +6,6 @@ const router = Router();
 
 router.route("/apply-leave").post(findUser, createLeave);
 
-router.route("/leave-requests").post(getAllLeaves);
+router.route("/leave-requests").get(getAllLeaves);
 
 export default router;

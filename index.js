@@ -7,6 +7,8 @@ import bodyParser from "body-parser";
 import SidebarRouter from "./src/routes/Sidebar.route.js";
 import { TeamRoute } from "./src/routes/Team.route.js";
 import AttendanceRouter from "./src/routes/Attendance.router.js";
+import dailyUpdateRoutes from "./src/routes/dailyTaskUpdate.router..js";
+import { TaskRoutes } from "./src/routes/Task.route.js";
 const app = express();
 
 app.use(express.json());
@@ -29,6 +31,12 @@ app.use("/api/leave", leaveRoute);
 
 // team related routes
 app.use("/api/team", TeamRoute);
+
+// task related routes
+app.use("/api/task", TaskRoutes);
+
+// daily task update related routes
+app.use("/api/dailyupdate", dailyUpdateRoutes);
 
 // sidebar related routes
 app.use("/api/sidebar", SidebarRouter);

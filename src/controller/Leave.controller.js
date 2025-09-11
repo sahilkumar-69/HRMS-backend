@@ -39,7 +39,7 @@ export const getAllLeaves = async (req, res) => {
       .populate("employee", "FirstName LastName Email Department")
       .sort({ createdAt: -1 });
 
-    return res.json({ success: true, leaves });
+    return res.status(200).json({ success: true, leaves });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });
   }

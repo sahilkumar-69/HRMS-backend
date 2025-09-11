@@ -5,20 +5,57 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
   </head>
+  <style>
+    abbr {
+    position: relative; 
+     border: 1px solid black;
+    text-decoration: underline dotted; /* optional */
+  }
+
+  /* Custom tooltip box */
+  abbr::after {
+    content: attr(title); /* take text from title attribute */
+    position: absolute;
+    bottom: 125%; /* show above the element */
+    left: 50%;
+    transform: translateX(-50%);
+    background: black;
+    color: white;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 14px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease-in-out;
+  }
+
+  /* Small triangle arrow */
+  abbr::before {
+    content: "";
+    position: absolute;
+    bottom: 115%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 6px;
+    border-style: solid;
+    border-color: black transparent transparent transparent;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+  }
+
+  abbr:hover::after,
+  abbr:hover::before {
+    opacity: 1;
+  }
+  </style>
   <body>
-    <progress max="100" value="40">no progress</progress>
-    <meter
-      id="fuel"
-      min="0"
-      max="100"
-      low="33"
-      high="66"
-      optimum="80"
-      value="10"
-    >
-      at 40/100
-    </meter>
-    <input type="week" max="2019-W23" step="">
-    <input type="time" max="17:00" step="900" />
+      <div>
+        <abbr  title="infomation"> 
+        <svg style="width: 56px;border:1px solid black" title="info"  fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          </abbr>
+        </div>
   </body>
 </html>
