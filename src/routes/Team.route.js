@@ -3,7 +3,7 @@ import {
   createTeam,
   getTeamById,
   getTeams,
-} from "../controller/Team.controller.js";
+} from "../controllers/Team.controller.js";
 import { findUser } from "../middleware/findUser.js";
 
 const TeamRoute = Router();

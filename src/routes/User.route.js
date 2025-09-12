@@ -6,11 +6,11 @@ import {
   updateUser,
   userLogin,
   userSignUp,
-} from "../controller/authentication.js";
+} from "../controllers/authentication.js";
 
 import { upload, uploadProfilePic } from "../middleware/upload.js";
 import { findUser } from "../middleware/findUser.js";
-import cors from "cors";
+ 
 
 const Route = Router();
 

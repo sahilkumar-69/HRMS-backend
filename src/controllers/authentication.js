@@ -54,7 +54,6 @@ const userLogin = async (req, res) => {
 
     const accessToken = await isExists.generateAccessToken();
 
-    isExists.Token = accessToken;
     return res.status(200).json({
       success: true,
       message: "logged in ",
@@ -174,10 +173,6 @@ const userSignUp = async (req, res) => {
       AllowedTabs: AllowedTabs,
       Password,
     });
-
-    const accessToken = user.generateAccessToken();
-
-    user.Token = accessToken;
 
     const savedUser = await user.save();
 

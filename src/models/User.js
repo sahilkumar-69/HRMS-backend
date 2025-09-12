@@ -65,11 +65,6 @@ const userSchema = new mongoose.Schema(
       require: true,
     },
 
-    Token: {
-      type: String,
-      require: true,
-    },
-
     Role: {
       type: String,
       enum: ["HR", "EMPLOYEE", "TL", "ADMIN"],
