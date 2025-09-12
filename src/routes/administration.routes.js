@@ -9,10 +9,11 @@ import {
   removeItemFromCategory,
   addAdministrationEntrie,
 } from "../controllers/administration.controller.js";
+import { findUser } from "../middleware/findUser.js";
 
 const administrationRoutes = express.Router();
 
-administrationRoutes.post("/", addAdministrationEntrie);
+administrationRoutes.post("/", findUser,addAdministrationEntrie);
 administrationRoutes.get("/", getAllStores);
 administrationRoutes.get("/:id", getStoreById);
 administrationRoutes.put("/:id", updateStore);

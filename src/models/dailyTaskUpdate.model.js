@@ -11,7 +11,11 @@ const taskUpdateSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    img: {
+    public_id: {
+      type: String, // store image URL / path
+      default: null,
+    },
+    secure_url: {
       type: String, // store image URL / path
       default: null,
     },

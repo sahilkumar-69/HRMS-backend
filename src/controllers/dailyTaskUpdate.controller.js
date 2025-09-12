@@ -1,16 +1,32 @@
 import TaskUpdate from "../models/dailyTaskUpdate.model.js";
+import uploadOnCloudinary from "../utils/Cloudinary.js";
 
 // Create a new daily task update
-export const createTaskUpdate = async (req, res) => {
+export const addDailyUpdate = async (req, res) => {
   try {
-    const { title, description, img, name, role } = req.body;
+    const { title, description } = req.body;
+    let uploadedFile;
+
+    if (req.file) {
+      uploadedFile = await uploadOnCloudinary(file.path, "HRMS_DAILY_UPDATES");
+
+      console.log(uploadedFile);
+
+      if (!uploadedFile.success) {
+        return res.status(501).json({
+          error: uploadedFile.message,
+          message: "File not upload, try again",
+        });
+      }
+    }
 
     const newUpdate = new TaskUpdate({
       title,
       description,
-      img,
-      name,
-      role,
+      role: req.user.Role,
+      name: req.user.FirstName,
+      public_id: uploadedFile?.response.public_id || null,
+      secure_url: uploadedFile?.response.secure_url || null,
     });
 
     await newUpdate.save();

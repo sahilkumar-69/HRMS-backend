@@ -1,17 +1,13 @@
 import express from "express";
 import {
-  createTaskUpdate,
+  addDailyUpdate,
   getTaskUpdates,
 } from "../controllers/dailyTaskUpdate.controller.js";
-import { uploadProfilePic } from "../middleware/upload.js";
+import { upload } from "../middleware/upload.js";
 
 const dailyUpdateRoutes = express.Router();
 
-dailyUpdateRoutes.post(
-  "/task-updates",
-  uploadProfilePic.single("file"),
-  createTaskUpdate
-); // Create daily update
+dailyUpdateRoutes.post("/daily-update", upload.single("img"), addDailyUpdate); // Create daily update
 dailyUpdateRoutes.get("/task-updates", getTaskUpdates); // Get all updates (with optional filters)
 
 export default dailyUpdateRoutes;

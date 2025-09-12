@@ -3,20 +3,24 @@ import administration from "../models/administration.model.js";
 //   Create a new AccessoryStore document
 export const addAdministrationEntrie = async (req, res) => {
   try {
-    const { type } = req.body;
+    const { type, data, category } = req.body;
 
-    console.log(req.body);
+    // console.log(req.body);
     if (!type)
       return res.status(404).json({
         success: false,
         message: "type field is required",
       });
 
-    const newEntry = await administration.find();
+    const newEntry = await administration.findOne();
 
-    return res.json({
-      newEntry,
-    });
+    newEntry[type][category] = data;
+
+    // console.log(newEntry);
+
+    await newEntry.save();
+
+    return res.json(newEntry);
 
     const newStore = new administration(req.body); // expects { accessories: [], services: [], miscellaneous: [] }
     const savedStore = await newStore.save();

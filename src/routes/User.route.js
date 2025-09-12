@@ -10,14 +10,13 @@ import {
 
 import { upload, uploadProfilePic } from "../middleware/upload.js";
 import { findUser } from "../middleware/findUser.js";
- 
 
 const Route = Router();
 
 // USER RELATED ROUTES
 
 Route.route("/login").post(userLogin);
-  
+
 Route.route("/add-employee").post(
   uploadProfilePic.single("Profile"),
   userSignUp
