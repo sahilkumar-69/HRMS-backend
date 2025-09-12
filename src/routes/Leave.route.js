@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createLeave, getAllLeaves } from "../controller/Leave.controller.js";
+import { createLeave, getAllLeaves } from "../controllers/Leave.controller.js";
 import { findUser } from "../middleware/findUser.js";
 
 const router = Router();

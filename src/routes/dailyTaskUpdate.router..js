@@ -2,7 +2,7 @@ import express from "express";
 import {
   createTaskUpdate,
   getTaskUpdates,
-} from "../controller/dailyTaskUpdate.controller.js";
+} from "../controllers/dailyTaskUpdate.controller.js";
 import { uploadProfilePic } from "../middleware/upload.js";
 
 const dailyUpdateRoutes = express.Router();

@@ -4,7 +4,7 @@ import {
   createTask,
   getTasks,
   updateTask,
-} from "../controller/task.controller.js";
+} from "../controllers/task.controller.js";
 import { upload, uploadProfilePic } from "../middleware/upload.js";
 import { findUser } from "../middleware/findUser.js";
 

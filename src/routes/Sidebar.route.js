@@ -6,7 +6,7 @@ import {
   getSidebarById,
   updateSidebar,
   deleteSidebar,
-} from "../controller/sidebar.controller.js";
+} from "../controllers/sidebar.controller.js";
 
 const SidebarRouter = express.Router();
 

@@ -4,7 +4,7 @@ import {
   checkOut,
   getAttendance,
   updateAttendance,
-} from "../controller/Attendance.controller.js";
+} from "../controllers/Attendance.controller.js";
 
 const AttendanceRouter = Router();
 
