@@ -10,6 +10,7 @@ import AttendanceRouter from "./src/routes/Attendance.router.js";
 import dailyUpdateRoutes from "./src/routes/dailyTaskUpdate.router..js";
 import { TaskRoutes } from "./src/routes/Task.route.js";
 import administrationRoutes from "./src/routes/administration.routes.js";
+import notificationRoutes from "./src/routes/notification.routes.js";
 const app = express();
 
 const allowedOrigins = [
@@ -56,8 +57,11 @@ app.use("/api/administration", administrationRoutes);
 // task related routes
 app.use("/api/task", TaskRoutes);
 
+//notification related routes
+app.use("/api/notification", notificationRoutes);
+
 // daily task update related routes
-app.use("/api/dailyupdate", dailyUpdateRoutes);
+app.use("/api/dailyupdates", dailyUpdateRoutes);
 
 // sidebar related routes
 app.use("/api/sidebar", SidebarRouter);

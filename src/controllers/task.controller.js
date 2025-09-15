@@ -1,9 +1,8 @@
 import Task from "../models/task.js";
-import { userModel as User } from "../models/User.js";
+import { userModel as User } from "../models/User.model.js";
 import uploadOnCloudinary, {
   deleteFromCloudinary,
 } from "../utils/Cloudinary.js";
- 
 
 const createTask = async (req, res) => {
   try {
@@ -109,14 +108,14 @@ const getTasks = async (req, res) => {
     let query = {};
 
     // If employee → show only their tasks
-    if (req.user.role === "employee") {
-      query.assignee = req.user.id;
-    }
+    // if (req.user.role === "EMPLOYEE") {
+    //   query.assignee = req.user._id;
+    // }
 
     // HR, TL, Owner can see all tasks
-    const tasks = await Task.find(query)
+    const tasks = await Task.find()
       .populate("assignee", "firstName lastName email role")
-      .populate("createdBy", "firstName lastName email role")
+      // .populate("createdBy", "firstName lastName email role")
       .sort({ dueDate: 1 });
 
     res.json(tasks);

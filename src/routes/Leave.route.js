@@ -1,10 +1,10 @@
 import { Router } from "express";
 import { createLeave, getAllLeaves } from "../controllers/Leave.controller.js";
-import { findUser } from "../middleware/findUser.js";
+import { authMiddleware } from "../middleware/authMiddleware.js";
 
 const router = Router();
 
-router.route("/apply-leave").post(findUser, createLeave);
+router.route("/apply-leave").post(authMiddleware, createLeave);
 
 router.route("/leave-requests").get(getAllLeaves);
 

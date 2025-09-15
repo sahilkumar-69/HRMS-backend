@@ -4,7 +4,7 @@ import {
   getTeamById,
   getTeams,
 } from "../controllers/Team.controller.js";
-import { findUser } from "../middleware/findUser.js";
+import { authMiddleware } from "../middleware/authMiddleware.js";
 
 const TeamRoute = Router();
 
@@ -12,6 +12,6 @@ TeamRoute.route("/create-team").post(createTeam);
 
 TeamRoute.route("/get-team").get(getTeams);
 
-TeamRoute.route("/:id").get(findUser, getTeamById);
+TeamRoute.route("/:id").get(authMiddleware, getTeamById);
 
 export { TeamRoute };

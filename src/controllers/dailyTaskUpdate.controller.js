@@ -1,14 +1,21 @@
 import TaskUpdate from "../models/dailyTaskUpdate.model.js";
-import uploadOnCloudinary from "../utils/Cloudinary.js";
+import uploadOnCloudinary, {
+  deleteFromCloudinary,
+} from "../utils/Cloudinary.js";
 
 // Create a new daily task update
 export const addDailyUpdate = async (req, res) => {
   try {
     const { title, description } = req.body;
-    let uploadedFile;
+    var uploadedFile;
+
+    console.log("FILE", req?.file || req?.files || "no file");
 
     if (req.file) {
-      uploadedFile = await uploadOnCloudinary(file.path, "HRMS_DAILY_UPDATES");
+      uploadedFile = await uploadOnCloudinary(
+        req.file.path,
+        "HRMS_DAILY_UPDATES"
+      );
 
       console.log(uploadedFile);
 
@@ -19,6 +26,8 @@ export const addDailyUpdate = async (req, res) => {
         });
       }
     }
+
+    console.log("user", req.user);
 
     const newUpdate = new TaskUpdate({
       title,
@@ -37,6 +46,7 @@ export const addDailyUpdate = async (req, res) => {
       data: newUpdate,
     });
   } catch (error) {
+    await deleteFromCloudinary(uploadedFile.response.public_id);
     res.status(500).json({ success: false, message: error.message });
   }
 };

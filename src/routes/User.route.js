@@ -9,7 +9,7 @@ import {
 } from "../controllers/authentication.js";
 
 import { upload, uploadProfilePic } from "../middleware/upload.js";
-import { findUser } from "../middleware/findUser.js";
+import { authMiddleware } from "../middleware/authMiddleware.js";
 
 const Route = Router();
 
@@ -22,7 +22,7 @@ Route.route("/add-employee").post(
   userSignUp
 );
 
-Route.route("/update-user/:id").patch(findUser, updateUser);
+Route.route("/update-user/:id").patch(authMiddleware, updateUser);
 
 Route.route("/delete-user").delete(deleteUser);
 

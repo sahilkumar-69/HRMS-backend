@@ -6,11 +6,11 @@ import {
   updateTask,
 } from "../controllers/task.controller.js";
 import { upload, uploadProfilePic } from "../middleware/upload.js";
-import { findUser } from "../middleware/findUser.js";
+import { authMiddleware } from "../middleware/authMiddleware.js";
 
 const TaskRoutes = Router();
 
-TaskRoutes.route("/get-tasks").get(findUser, getTasks);
+TaskRoutes.route("/get-tasks").get(getTasks);
 
 TaskRoutes.route("/add-task").post(upload.array("docs"), createTask);
 

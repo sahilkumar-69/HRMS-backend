@@ -1,33 +1,31 @@
-import { userModel } from "../models/User.js";
-import fs from "fs";
+import { userModel } from "../models/User.model.js";
+// import fs from "fs";
 
 import uploadOnCloudinary, {
   deleteFromCloudinary,
 } from "../utils/Cloudinary.js";
 import { isUserExists } from "../utils/IsUserExists.js";
+import { generateToken } from "../utils/generateToken.js";
 
 const userLogin = async (req, res) => {
   try {
     const { Role, Password, Email } = req.body;
 
-    if (!Role && !Email) {
+    if (!Email) {
       return res.status(400).json({
         success: false,
-
-        message: "Email or Role is required",
+        message: "Email is required",
       });
     }
 
     if (!Password || Password.length < 8) {
       return res.status(403).json({
         success: false,
-
-        message: "Password is required and min 8 character required",
+        message: "Password is required and must be at least 8 characters",
       });
     }
 
-    const isExists = await isUserExists(Email, Role);
-
+    const isExists = await userModel.findOne({ Email });
     if (!isExists) {
       return res.status(404).json({
         success: false,
@@ -35,7 +33,7 @@ const userLogin = async (req, res) => {
       });
     }
 
-    if (isExists.Role != Role) {
+    if (Role && isExists.Role !== Role) {
       return res.status(403).json({
         success: false,
         message: "No user with this role",
@@ -43,28 +41,26 @@ const userLogin = async (req, res) => {
     }
 
     const isPasswordMatch = await isExists.comparePassword(Password);
-
     if (!isPasswordMatch) {
       return res.status(401).json({
         success: false,
-
-        message: "password don't match",
+        message: "Password doesn't match",
       });
     }
 
-    const accessToken = await isExists.generateAccessToken();
+    const accessToken = isExists.generateAccessToken();
 
     return res.status(200).json({
       success: true,
-      message: "logged in ",
-
-      isExists,
+      message: "Logged in successfully",
+      user: isExists,
       accessToken,
     });
   } catch (error) {
-    console.error("erron in log in ", error);
-    return res.status(501).json({
-      message: "internal server error",
+    console.error("Error in login", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
     });
   }
 };

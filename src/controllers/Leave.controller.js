@@ -1,5 +1,6 @@
 // controllers/leaveController.js
 import Leave from "../models/leave.model.js";
+import { daysBetween } from "../utils/calculateDays.js";
 
 // Employee applies for leave
 export const createLeave = async (req, res) => {
@@ -12,6 +13,8 @@ export const createLeave = async (req, res) => {
         .json({ success: false, message: "All fields required" });
     }
 
+    let days = daysBetween(from, to);
+
     const leave = await Leave.create({
       employee: req.user._id, // taken from auth middleware
       leaveType,
@@ -19,7 +22,7 @@ export const createLeave = async (req, res) => {
       to,
       reason,
       status: "Pending",
-      createdBy: req.user._id,
+      days,
     });
 
     return res.status(201).json({
@@ -74,3 +77,5 @@ export const updateLeaveStatus = async (req, res) => {
     return res.status(500).json({ success: false, message: err.message });
   }
 };
+
+export const takenLeaves = async (req, res) => {};

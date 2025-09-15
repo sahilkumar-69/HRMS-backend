@@ -5,7 +5,7 @@ const leaveSchema = new Schema(
   {
     employee: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "userModel",
+      ref: "users",
       required: true,
     },
     leaveType: {
@@ -21,8 +21,9 @@ const leaveSchema = new Schema(
       enum: ["Pending", "Approved", "Rejected"],
       default: "Pending",
     },
-    createdBy: { type: Schema.Types.ObjectId, ref: "userModel" },
-    updatedBy: { type: Schema.Types.ObjectId, ref: "userModel" },
+    days: Number,
+    // createdBy: { type: Schema.Types.ObjectId, ref: "users" },
+    updatedBy: { type: Schema.Types.ObjectId, ref: "users" },
   },
   { timestamps: true }
 );
