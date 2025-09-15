@@ -1,7 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
- 
 
 const userSchema = new mongoose.Schema(
   {
@@ -19,11 +18,11 @@ const userSchema = new mongoose.Schema(
     // Basic info
     FirstName: { type: String, required: true },
 
-    LastName: { type: String },
+    LastName: String,
 
     Email: { type: String, required: true, unique: true, lowercase: true },
 
-    Phone: { type: String },
+    Phone: String,
 
     Profile_url: String,
 
@@ -50,6 +49,12 @@ const userSchema = new mongoose.Schema(
 
     AllowedTabs: [{ type: String }],
 
+    Notifications: [
+      { type: mongoose.Schema.Types.ObjectId, ref: "notifications" },
+    ],
+
+    Leaves: [{ type: mongoose.Schema.Types.ObjectId, ref: "leaveModel" }],
+
     EmergencyName: {
       type: String,
       require: true,
@@ -64,6 +69,8 @@ const userSchema = new mongoose.Schema(
       type: String,
       require: true,
     },
+
+    JoinedTeams: [{ type: Schema.Types.ObjectId, ref: "Team" }],
 
     Role: {
       type: String,
@@ -99,7 +106,7 @@ userSchema.methods.generateAccessToken = function () {
       Email: this.Email,
       Role: this.Role,
     },
-    process.env.ACCESS_TOKEN,
+    process.env.SECRET_TOKEN,
     {
       expiresIn: "1d" || process.env.ACCESS_TOKEN_EXPIRY,
     }

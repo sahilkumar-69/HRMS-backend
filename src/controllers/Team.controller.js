@@ -1,5 +1,5 @@
 import Team from "../models/team.js";
-import { userModel as User } from "../models/User.js";
+import { userModel as User } from "../models/User.model.js";
 
 // Create a new team
 const createTeam = async (req, res) => {

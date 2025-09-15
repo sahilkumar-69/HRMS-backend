@@ -1,7 +1,7 @@
 // routes/attendance.js
 import { Types } from "mongoose";
 import Attendance from "../models/Attendance.model.js";
-import { userModel } from "../models/User.js";
+import { userModel } from "../models/User.model.js";
 // import AttendanceModel from "../models/Attendance.model.js";
 
 // Check-in

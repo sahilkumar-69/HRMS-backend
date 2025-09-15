@@ -9,11 +9,11 @@ import {
   removeItemFromCategory,
   addAdministrationEntrie,
 } from "../controllers/administration.controller.js";
-import { findUser } from "../middleware/findUser.js";
+import { authMiddleware } from "../middleware/authMiddleware.js";
 
 const administrationRoutes = express.Router();
 
-administrationRoutes.post("/", findUser,addAdministrationEntrie);
+administrationRoutes.post("/", authMiddleware, addAdministrationEntrie);
 administrationRoutes.get("/", getAllStores);
 administrationRoutes.get("/:id", getStoreById);
 administrationRoutes.put("/:id", updateStore);
