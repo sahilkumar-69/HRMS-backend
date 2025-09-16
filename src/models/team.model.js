@@ -7,12 +7,12 @@ const TeamSchema = new Schema(
     description: { type: String },
 
     // One team lead
-    lead: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    lead: { type: Schema.Types.ObjectId, ref: "users", required: true },
 
     // Members of the team
-    members: [{ type: Schema.Types.ObjectId, ref: "User" }],
+    members: [{ type: Schema.Types.ObjectId, ref: "users" }],
 
-    createdBy: { type: Schema.Types.ObjectId, ref: "User" },
+    createdBy: { type: Schema.Types.ObjectId, ref: "users" },
   },
   { timestamps: true }
 );
