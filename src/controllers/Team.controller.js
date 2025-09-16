@@ -1,5 +1,5 @@
-import Team from "../models/team.js";
-import { userModel as User } from "../models/User.model.js";
+import teamModel from "../models/team.model.js";
+import { userModel } from "../models/User.model.js";
 
 // Create a new team
 const createTeam = async (req, res) => {
@@ -7,33 +7,48 @@ const createTeam = async (req, res) => {
     const { name, description, lead, members } = req.body;
 
     // Validate lead exists
-    const leadUser = await User.findById(lead);
+    const leadUser = await userModel.findById(lead);
+
     if (!leadUser || leadUser.Role !== "TL") {
       return res.status(400).json({ message: "Invalid team lead" });
     }
 
-    const team = new Team({
+    var team = new teamModel({
       name,
       description,
       lead,
       members,
-      createdBy: req.user.id, // HR or Owner
+      createdBy: req.user._id, // HR or Owner
     });
 
     await team.save();
+
+    const teamMembers = await userModel.find({ _id: { $in: members } });
+
+    await Promise.all(
+      teamMembers.map(async (member) => {
+        member.JoinedTeams.push(team._id);
+        await member.save();
+      })
+    );
+    // console.log(teamMembers);
+
     res
       .status(201)
       .json({ success: true, message: "Team created successfully", team });
   } catch (error) {
+    await teamModel.findByIdAndDelete(team._id);
+
     res
       .status(500)
       .json({ message: "Error creating team", error: error.message });
   }
 };
 // Get teams (with members)
-const getTeams = async (req, res) => {
+const getAllTeams = async (req, res) => {
   try {
-    const teams = await Team.find()
+    const teams = await teamModel
+      .find()
       .populate("lead", "FirstName LastName Email Role")
       .populate("members", "FirstName LastName Email Role");
 
@@ -45,7 +60,7 @@ const getTeams = async (req, res) => {
   }
 };
 
-const getTeamById = async (req, res) => {
+const getTeamsById = async (req, res) => {
   try {
     const { id } = req.params;
     const user = req.user; // assuming auth middleware attaches user info (id, role)
@@ -63,7 +78,8 @@ const getTeamById = async (req, res) => {
       };
     }
 
-    const team = await Team.findOne(query)
+    const team = await teamModel
+      .findOne(query)
       .populate("lead", "FirstName LastName Email Role")
       .populate("members", "FirstName LastName Email Role");
 
@@ -81,12 +97,42 @@ const getTeamById = async (req, res) => {
   }
 };
 
+const getJoinedTeams = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      res.json({
+        message: "param not found",
+        success: false,
+      });
+    }
+
+    const teams = await teamModel
+      .find({ members: id }) // checks if userId exists in array
+      .populate("lead", "FirstName LastName Email") // populate lead details
+      .populate("members", "FirstName LastName Email"); // optional: populate members
+
+    res.json({
+      success: true,
+      count: teams.length,
+      teams,
+    });
+  } catch (error) {
+    res.json({
+      message: error.message,
+      success: false,
+    });
+  }
+};
+
 const updateTeam = async (req, res) => {
   try {
     const { id } = req.params;
     const updates = req.body;
 
-    let team = await Team.findById(id);
+    let team = await teamModel.findById(id);
+
     if (!team) {
       return res.status(404).json({ message: "Team not found" });
     }
@@ -113,7 +159,8 @@ const updateTeam = async (req, res) => {
     Object.assign(team, updates);
     await team.save();
 
-    team = await Team.findById(id)
+    team = await teamModel
+      .findById(id)
       .populate("lead", "FirstName LastName Role Email")
       .populate("members", "FirstName LastName Role Email");
 
@@ -125,4 +172,100 @@ const updateTeam = async (req, res) => {
   }
 };
 
-export { createTeam, updateTeam, getTeams, getTeamById };
+const addMembers = async (req, res) => {
+  try {
+    const { teamId } = req.params;
+
+    const { userIds } = req.body;
+    console.log(userIds);
+
+    if (req.user.Role === "EMPLOYEE" || req.user.Role === "HR") {
+      return res.json({
+        message: "Only team lead or admin can made changes to the team",
+        success: false,
+      });
+    }
+
+    const updatedTeam = await teamModel
+      .findByIdAndUpdate(
+        teamId,
+        {
+          $addToSet: { members: { $each: userIds } },
+        },
+        {
+          new: true,
+        }
+      )
+      .populate("members", "FirstName LastName Email");
+
+    if (!updatedTeam)
+      return res.json({
+        message: "team not found",
+        success: false,
+      });
+
+    const updatedUser = await userModel
+      .updateMany(
+        { _id: { $in: userIds } },
+        {
+          $addToSet: {
+            JoinedTeams: teamId,
+          },
+        }
+      )
+      .select("JoinedTeams");
+
+    console.log(updatedUser);
+
+    return res.json({ success: true, team: updatedTeam });
+  } catch (error) {
+    return res.json({ success: false, message: error.message, error });
+  }
+};
+
+const removeMember = async (req, res) => {
+  try {
+    const { teamId } = req.params;
+
+    const { userIds } = req.body;
+
+    const updatedTeam = await teamModel
+      .findByIdAndUpdate(
+        teamId,
+        { $pull: { members: { $in: userIds } } },
+        { new: true }
+      )
+      .populate("members", "FirstName LastName Email");
+
+    if (!updatedTeam) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Team not found" });
+    }
+
+    await userModel.updateMany(
+      { _id: { $in: userIds } },
+      { $pull: { JoinedTeams: teamId } }
+    );
+
+    res.json({
+      success: true,
+      updatedTeam,
+    });
+  } catch (error) {
+    res.json({
+      message: error.message,
+      success: false,
+    });
+  }
+};
+
+export {
+  createTeam,
+  updateTeam,
+  getAllTeams,
+  getTeamsById,
+  getJoinedTeams,
+  addMembers,
+  removeMember,
+};

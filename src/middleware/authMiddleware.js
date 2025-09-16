@@ -5,9 +5,9 @@ import jwt from "jsonwebtoken";
 
 export const authMiddleware = async (req, res, next) => {
   try {
-    const token = req.header("authorization")?.replace("Bearer ", "");
+    const token = req.header("Authorization")?.replace("Bearer ", "");
 
-    console.log(token);
+    // console.log(token);
 
     if (!token) {
       return res.status(401).json({
@@ -16,11 +16,11 @@ export const authMiddleware = async (req, res, next) => {
       });
     }
 
-    console.log(process.env.SECRET_TOKEN);
+    // console.log(process.env.SECRET_TOKEN);
 
     const decodedToken = jwt.verify(token, process.env.SECRET_TOKEN);
 
-    console.log("decoded token ", decodedToken);
+    // console.log("decoded token ", decodedToken);
 
     // if (!decodedToken) {
     //   return res.status(401).json({
