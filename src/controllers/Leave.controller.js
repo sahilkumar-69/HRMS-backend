@@ -1,11 +1,15 @@
 // controllers/leaveController.js
 import Leave from "../models/leave.model.js";
+import { userModel } from "../models/User.model.js";
 import { daysBetween } from "../utils/calculateDays.js";
 
 // Employee applies for leave
 export const createLeave = async (req, res) => {
   try {
     const { leaveType, from, to, reason } = req.body;
+
+    console.log(req.body);
+    console.log(req.user);
 
     if (!leaveType || !from || !to || !reason) {
       return res
@@ -25,6 +29,10 @@ export const createLeave = async (req, res) => {
       days,
     });
 
+    await userModel.findByIdAndUpdate(req.user._id, {
+      $addToSet: { Leaves: leave._id },
+    });
+
     return res.status(201).json({
       success: true,
       message: "Leave request submitted successfully",
@@ -37,8 +45,23 @@ export const createLeave = async (req, res) => {
 
 // HR/Admin fetches all leave requests
 export const getAllLeaves = async (req, res) => {
+  const { leaveId } = req.params;
+
+  const { status } = req.body;
+
   try {
-    const leaves = await Leave.find()
+    const { Role } = req.user;
+
+    if (Role !== "HR" && Role !== "ADMIN") {
+      return res.json({
+        success: false,
+        message: "Access denied",
+      });
+    }
+
+    const leaves = await Leave.findByIdAndUpdate(leaveId, {
+      status: status,
+    })
       .populate("employee", "FirstName LastName Email Department")
       .sort({ createdAt: -1 });
 

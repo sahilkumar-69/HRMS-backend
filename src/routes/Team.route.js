@@ -1,27 +1,30 @@
 import { Router } from "express";
 import {
- 
   addMembers,
   createTeam,
+  deleteTeam,
   getAllTeams,
   getJoinedTeams,
   getTeamsById,
-  removeMember,
+  removeMembers,
 } from "../controllers/Team.controller.js";
 import { authMiddleware } from "../middleware/authMiddleware.js";
 
 const TeamRoute = Router();
 
-TeamRoute.route("/create-team").post(authMiddleware, createTeam);
+TeamRoute.post("/create-team", authMiddleware, createTeam);
 
-TeamRoute.route("/get-teams").get(getAllTeams); // get all teams
+TeamRoute.get("/get-teams",getAllTeams); // get all teams
 
-TeamRoute.route("/:id").get(authMiddleware, getTeamsById);
+TeamRoute.get("/:id",authMiddleware, getTeamsById);
 
-TeamRoute.route("/:teamId/remove-members").patch(authMiddleware, removeMember); // add member in team
+TeamRoute.patch("/:teamId/remove-members",authMiddleware, removeMembers); // add member in team
 
-TeamRoute.route("/:teamId/add-members").patch(authMiddleware, addMembers); // add member in team
+TeamRoute.patch("/:teamId/add-members",authMiddleware, addMembers); // add member in team
 
-TeamRoute.route("/joined-by/:id").get(getJoinedTeams); // get teams joined by user
+TeamRoute.get("/joined-by/:id",getJoinedTeams); // get teams joined by user
+
+TeamRoute.delete("/delete/:teamId",authMiddleware,deleteTeam); // get teams joined by user
+
 
 export { TeamRoute };
