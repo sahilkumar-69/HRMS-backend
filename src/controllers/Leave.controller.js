@@ -2,6 +2,7 @@
 import Leave from "../models/leave.model.js";
 import { userModel } from "../models/User.model.js";
 import { daysBetween } from "../utils/calculateDays.js";
+import { isValidObjectId } from "mongoose";
 
 // Employee applies for leave
 export const createLeave = async (req, res) => {
@@ -42,31 +43,48 @@ export const createLeave = async (req, res) => {
     return res.status(500).json({ success: false, message: err.message });
   }
 };
-
 // HR/Admin fetches all leave requests
 export const getAllLeaves = async (req, res) => {
-  const { leaveId } = req.params;
-
-  const { status } = req.body;
-
   try {
-    const { Role } = req.user;
+    const { Role, _id } = req.user;
 
-    if (Role !== "HR" && Role !== "ADMIN") {
-      return res.json({
-        success: false,
-        message: "Access denied",
-      });
+    let leaves;
+
+    if (Role === "HR" || Role === "ADMIN") {
+      leaves = await Leave.find()
+        .populate("employee", "FirstName LastName Email Department")
+        .sort({ createdAt: -1 });
+    } else {
+      leaves = await Leave.find({ employee: _id })
+        .populate("employee", "FirstName LastName Email Department")
+        .sort({ createdAt: -1 });
     }
 
-    const leaves = await Leave.findByIdAndUpdate(leaveId, {
-      status: status,
-    })
-      .populate("employee", "FirstName LastName Email Department")
-      .sort({ createdAt: -1 });
-
-    return res.status(200).json({ success: true, leaves });
+    return res.status(200).json({
+      success: true,
+      message: "Successfully fetched",
+      leaves,
+    });
   } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+export const getUserLeaves = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    if (!isValidObjectId(userId)) {
+      return res
+        .status(500)
+        .json({ success: false, message: "Invalid user id" });
+    }
+
+    const user = await userModel
+      .findById(userId)
+      .select("Leaves")
+      .sort({ createdAt: -1 });
+  } catch (error) {
     return res.status(500).json({ success: false, message: err.message });
   }
 };
@@ -81,6 +99,15 @@ export const updateLeaveStatus = async (req, res) => {
       return res
         .status(400)
         .json({ success: false, message: "Invalid status" });
+    }
+
+    const { Role } = req.user;
+
+    if (Role !== "ADMIN") {
+      return res.json({
+        success: false,
+        message: "Access denied",
+      });
     }
 
     const leave = await Leave.findByIdAndUpdate(

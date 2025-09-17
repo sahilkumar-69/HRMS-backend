@@ -6,7 +6,11 @@ const router = Router();
 
 router.route("/apply-leave").post(authMiddleware, createLeave);
 
-router.route("/all-requests").get(getAllLeaves);
+router.route("/all-requests").get(authMiddleware, getAllLeaves);
+
+router.route("/:id").get(authMiddleware, getAllLeaves);
+
+router.route("/taken-by/:userId").get(authMiddleware, getAllLeaves);
 
 router
   .route("/update-request-status/:leaveId")
