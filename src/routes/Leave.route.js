@@ -4,16 +4,18 @@ import { authMiddleware } from "../middleware/authMiddleware.js";
 
 const router = Router();
 
-router.route("/apply-leave").post(authMiddleware, createLeave);
+router.post("/apply-leave", authMiddleware, createLeave);
 
-router.route("/all-requests").get(authMiddleware, getAllLeaves);
+router.get("/all-requests", authMiddleware, getAllLeaves);
 
-router.route("/:id").get(authMiddleware, getAllLeaves);
+router.get("/:id", authMiddleware, getAllLeaves);
 
-router.route("/taken-by/:userId").get(authMiddleware, getAllLeaves);
+router.get("/taken-by/:userId", authMiddleware, getAllLeaves);
 
-router
-  .route("/update-request-status/:leaveId")
-  .post(authMiddleware, updateLeaveStatus);
+router.patch(
+  "/update-request-status/:leaveId",
+  authMiddleware,
+  updateLeaveStatus
+);
 
 export default router;
