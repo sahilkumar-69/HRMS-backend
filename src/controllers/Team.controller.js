@@ -223,7 +223,7 @@ const addMembers = async (req, res) => {
   }
 };
 
-const removeMember = async (req, res) => {
+const removeMembers = async (req, res) => {
   try {
     const { teamId } = req.params;
 
@@ -260,6 +260,48 @@ const removeMember = async (req, res) => {
   }
 };
 
+const deleteTeam = async (req, res) => {
+  try {
+    const { teamId } = req.params;
+
+    const { Role } = req.user;
+
+    if (Role !== "TL")
+      return res.json({
+        message: "Only Team Lead can delete team",
+        success: false,
+      });
+
+    if (!teamId)
+      return res.json({
+        message: "teamId is required",
+        success: false,
+      });
+
+    const deletedTeam = await teamModel.findByIdAndDelete(teamId);
+
+    if (deletedTeam) {
+      await Promise.all(
+        deletedTeam.members.map((memberId) => {
+          userModel.findByIdAndUpdate(memberId, {
+            $pull: { JoinedTeams: teamId },
+          });
+        })
+      );
+    }
+
+    res.json({
+      success: true,
+      deletedTeam,
+    });
+  } catch (error) {
+    res.json({
+      message: error.message,
+      success: false,
+    });
+  }
+};
+
 export {
   createTeam,
   updateTeam,
@@ -267,5 +309,6 @@ export {
   getTeamsById,
   getJoinedTeams,
   addMembers,
-  removeMember,
+  removeMembers,
+  deleteTeam,
 };
