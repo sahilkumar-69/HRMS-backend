@@ -99,7 +99,13 @@ const getTeamsById = async (req, res) => {
 
 const getJoinedTeams = async (req, res) => {
   try {
+
+    const { Role } = req.user;
+
     const { id } = req.params;
+
+    // if (user.Role === "TL") {
+    // }
 
     if (!id) {
       res.json({
@@ -109,7 +115,17 @@ const getJoinedTeams = async (req, res) => {
     }
 
     const teams = await teamModel
-      .find({ members: id }) // checks if userId exists in array
+      .find({
+        $or: [
+          {
+            lead: id,
+          },
+          {
+            members: id,
+          },
+        ],
+      }) // checks if userId exists in array
+      // .find({ members: id }) // checks if userId exists in array
       .populate("lead", "FirstName LastName Email") // populate lead details
       .populate("members", "FirstName LastName Email"); // optional: populate members
 

@@ -11,6 +11,8 @@ import dailyUpdateRoutes from "./src/routes/dailyTaskUpdate.router..js";
 import { TaskRoutes } from "./src/routes/Task.route.js";
 import administrationRoutes from "./src/routes/administration.routes.js";
 import notificationRoutes from "./src/routes/notification.routes.js";
+import adminRoutes from "./src/routes/admin.routes.js";
+import { policyRoutes } from "./src/routes/policy.routes.js";
 const app = express();
 
 const allowedOrigins = [
@@ -68,6 +70,11 @@ app.use("/api/sidebar", SidebarRouter);
 
 // attendance related routes
 app.use("/api/attendance", AttendanceRouter);
+
+// admin related routes
+app.use("/api/admin", adminRoutes);
+
+app.use("/api/policy", policyRoutes);
 
 app.listen(4343, async (err) => {
   if (err) return console.log("error while listning", err);

@@ -22,7 +22,7 @@ TeamRoute.patch("/:teamId/remove-members",authMiddleware, removeMembers); // add
 
 TeamRoute.patch("/:teamId/add-members",authMiddleware, addMembers); // add member in team
 
-TeamRoute.get("/joined-by/:id",getJoinedTeams); // get teams joined by user
+TeamRoute.get("/joined-by/:id",authMiddleware,getJoinedTeams); // get teams joined by user
 
 TeamRoute.delete("/delete/:teamId",authMiddleware,deleteTeam); // get teams joined by user
 
