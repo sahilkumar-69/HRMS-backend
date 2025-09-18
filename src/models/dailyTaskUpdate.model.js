@@ -19,17 +19,12 @@ const taskUpdateSchema = new mongoose.Schema(
       type: String, // store image URL / path
       default: null,
     },
-    name: {
-      type: String,
-      required: true,
-    },
-    role: {
-      type: String,
-      enum: ["HR", "ADMIN", "TL", "EMPLOYEE"], // optional: restrict to roles
-      required: true,
+    employee: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "users",
     },
   },
   { timestamps: true }
 );
 
-export default mongoose.model("TaskUpdate", taskUpdateSchema);
+export const dailyUpdates =  mongoose.model("TaskUpdate", taskUpdateSchema);

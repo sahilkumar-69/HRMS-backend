@@ -1,4 +1,5 @@
-import TaskUpdate from "../models/dailyTaskUpdate.model.js";
+import { dailyUpdates } from "../models/dailyTaskUpdate.model.js";
+import { userModel } from "../models/User.model.js";
 import uploadOnCloudinary, {
   deleteFromCloudinary,
 } from "../utils/Cloudinary.js";
@@ -9,7 +10,7 @@ export const addDailyUpdate = async (req, res) => {
     const { title, description } = req.body;
     var uploadedFile;
 
-    console.log("FILE", req?.file || req?.files || "no file");
+    // console.log("FILE", req?.file || req?.files || "no file");
 
     if (req.file) {
       uploadedFile = await uploadOnCloudinary(
@@ -17,7 +18,7 @@ export const addDailyUpdate = async (req, res) => {
         "HRMS_DAILY_UPDATES"
       );
 
-      console.log(uploadedFile);
+      // console.log(uploadedFile);
 
       if (!uploadedFile.success) {
         return res.status(501).json({
@@ -27,18 +28,21 @@ export const addDailyUpdate = async (req, res) => {
       }
     }
 
-    console.log("user", req.user);
+    // console.log("user", req.user);
 
-    const newUpdate = new TaskUpdate({
+    const newUpdate = await dailyUpdates.create({
       title,
       description,
-      role: req.user.Role,
-      name: req.user.FirstName,
-      public_id: uploadedFile?.response.public_id || null,
-      secure_url: uploadedFile?.response.secure_url || null,
+      employee: req.user._id,
+      public_id: uploadedFile?.response?.public_id || null,
+      secure_url: uploadedFile?.response?.secure_url || null,
     });
 
-    await newUpdate.save();
+    if (newUpdate._id) {
+      newUpdate.employee = await userModel
+        .findById(req.user._id)
+        .select("FirstName Role Department ");
+    }
 
     res.status(201).json({
       success: true,
@@ -46,23 +50,37 @@ export const addDailyUpdate = async (req, res) => {
       data: newUpdate,
     });
   } catch (error) {
-    await deleteFromCloudinary(uploadedFile.response.public_id);
+    if (uploadedFile?.response)
+      await deleteFromCloudinary(uploadedFile?.response?.public_id);
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
 // Get all updates (optional: filter by role or name)
-export const getTaskUpdates = async (req, res) => {
+export const getDailyTaskUpdates = async (req, res) => {
   try {
-    const { role, name } = req.query;
+    const { Role, _id } = req.user;
 
-    const filter = {};
-    if (role) filter.role = role;
-    if (name) filter.name = name;
+    let prevUpdates;
 
-    const updates = await TaskUpdate.find(filter).sort({ createdAt: -1 });
+    if (Role === "TL" || Role === "ADMIN") {
+      prevUpdates = await dailyUpdates
+        .find()
+        .populate("employee", "FirstName LastName Email Role Department")
+        .sort({ createdAt: -1 });
+    } else {
+      prevUpdates = await dailyUpdates
+        .find({ employee: _id })
+        .populate("employee", "FirstName LastName Email Role Department")
+        .sort({ createdAt: -1 });
+    }
 
-    res.status(200).json({ success: true, data: updates });
+    return res.status(200).json({
+      success: true,
+      message: "Successfully fetched",
+      count: prevUpdates.length,
+      prevUpdates,
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

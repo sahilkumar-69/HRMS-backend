@@ -63,7 +63,7 @@ app.use("/api/task", TaskRoutes);
 app.use("/api/notification", notificationRoutes);
 
 // daily task update related routes
-app.use("/api/dailyupdates", dailyUpdateRoutes);
+app.use("/api/daily-updates", dailyUpdateRoutes);
 
 // sidebar related routes
 app.use("/api/sidebar", SidebarRouter);
