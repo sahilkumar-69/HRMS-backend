@@ -194,7 +194,6 @@ const updateTask = async (req, res) => {
     });
   }
 };
-
 // Get all tasks assigned to an employee
 const getEmployeeTasks = async (req, res) => {
   try {

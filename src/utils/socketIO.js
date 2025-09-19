@@ -21,4 +21,11 @@ export const initiateServer = (server) => {
       console.log("user disconnected", socket.id);
     });
   });
+
+  return io;
+};
+
+export const getIo = () => {
+  if (!io) throw new Error("Socket.io is not initialized");
+  return io;
 };

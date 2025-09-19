@@ -34,7 +34,7 @@ const userSchema = new mongoose.Schema(
 
     Tasks: [{ type: mongoose.Schema.Types.ObjectId, ref: "Task" }],
 
-    Designation: { type: String, require: true },
+    // Designation: { type: String, require: true },
 
     JoiningDate: { type: Date, default: Date.now },
     // Security

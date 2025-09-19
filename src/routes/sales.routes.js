@@ -1,15 +1,14 @@
 import express from "express";
 import { authMiddleware } from "../middleware/authMiddleware.js";
 import {
-  addPolicy,
-  updatePolicy,
-  getPolicy,
-} from "../controllers/policy.controller.js";
+addSale,getSales
+} from "../controllers/sales.controller.js";
+import { upload } from "../middleware/upload.js";
 
-export const policyRouter = express.Router();
+export const salesRouter = express.Router();
 
-policyRouter.post("/add-policy", authMiddleware, addPolicy);
+salesRouter.post("/", authMiddleware,upload.array("docs"), addSale);
 
-policyRouter.patch("/update-policy", authMiddleware, updatePolicy);
+salesRouter.get("/", authMiddleware, getSales);
 
-policyRouter.get("/get-policy", authMiddleware, getPolicy);
+// salesRouter.get("/get-policy", authMiddleware, getPolicy);
