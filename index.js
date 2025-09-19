@@ -1,5 +1,6 @@
 import express from "express";
-import cors from 'cors'
+import { createServer } from "http";
+import cors from "cors";
 import { Route } from "./src/routes/User.route.js";
 import leaveRoute from "./src/routes/Leave.route.js";
 import { dbConnect } from "./src/Database/dbConnect.js";
@@ -13,13 +14,20 @@ import administrationRoutes from "./src/routes/administration.routes.js";
 import notificationRoutes from "./src/routes/notification.routes.js";
 import adminRoutes from "./src/routes/admin.routes.js";
 import { policyRoutes } from "./src/routes/policy.routes.js";
+import { initiateServer } from "./src/utils/socketIO.js";
+import { salesRouter } from "./src/routes/sales.routes.js";
+
 const app = express();
+
+// const server = createServer(app);
 
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:5174",
   "http://localhost:3001",
 ];
+
+// initiateServer(server);
 
 app.use(express.json());
 
@@ -74,7 +82,11 @@ app.use("/api/attendance", AttendanceRouter);
 // admin related routes
 app.use("/api/admin", adminRoutes);
 
+// policy related routes
 app.use("/api/policy", policyRoutes);
+
+// sales related routes
+app.use("/api/sales", salesRouter);
 
 app.listen(4343, async (err) => {
   if (err) return console.log("error while listning", err);

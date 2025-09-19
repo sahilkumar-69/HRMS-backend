@@ -73,7 +73,7 @@ const userSignUp = async (req, res) => {
     Phone,
     Dob,
     Department,
-    Designation,
+    // Designation,
     Permissions,
     Address,
     Role,
@@ -85,7 +85,7 @@ const userSignUp = async (req, res) => {
     AllowedTabs,
   } = req.body;
 
-  console.log(req.body);
+  // console.log(req.body);
 
   if (
     [
@@ -94,7 +94,7 @@ const userSignUp = async (req, res) => {
       Phone,
       Dob,
       Department,
-      Designation,
+      // Designation,
       Role,
       Address,
       EmergencyPhone,
@@ -158,7 +158,7 @@ const userSignUp = async (req, res) => {
       Department,
       Profile_url: cloudRes.response.secure_url,
       Profile_Public_id: cloudRes.response.public_id,
-      Designation,
+      // Designation,
       Permissions,
       Address,
       JoiningDate,
