@@ -16,6 +16,8 @@ import adminRoutes from "./src/routes/admin.routes.js";
 import { policyRoutes } from "./src/routes/policy.routes.js";
 import { initiateServer } from "./src/utils/socketIO.js";
 import { salesRouter } from "./src/routes/sales.routes.js";
+import otpRouter from "./src/routes/otp.routes.js";
+import path from "path";
 
 const app = express();
 
@@ -28,6 +30,10 @@ const allowedOrigins = [
 ];
 
 // initiateServer(server);
+
+app.set("view engine", "ejs");
+
+app.set("views", path.join(path.resolve(), "/src/views"));
 
 app.use(express.json());
 
@@ -87,6 +93,9 @@ app.use("/api/policy", policyRoutes);
 
 // sales related routes
 app.use("/api/sales", salesRouter);
+
+app.use("/api/reset-password", otpRouter);
+
 
 app.listen(4343, async (err) => {
   if (err) return console.log("error while listning", err);
