@@ -1,7 +1,7 @@
 import "dotenv/config";
 import nodemailer from "nodemailer";
 import Otp from "../models/otp.model.js";
-import { generateOTP, hashOTP } from "./Otp.js";
+import { generateOTP, hashOTP } from "./otp.js"
 
 const otp = generateOTP();
 const otpHash = hashOTP(otp);
