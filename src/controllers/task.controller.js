@@ -18,14 +18,7 @@ const createTask = async (req, res) => {
 
     // console.log(req.body);
     // Validate required fields
-    if (
-      !title ||
-      !description ||
-      !priority ||
-      !dueDate ||
-      !assigner ||
-      !status
-    ) {
+    if (!title || !description || !priority || !dueDate || !assigner) {
       return res
         .status(400)
         .json({ success: false, message: "Missing required fields" });
@@ -92,7 +85,7 @@ const createTask = async (req, res) => {
       task,
     });
   } catch (error) {
-    await Promise.all(
+    docs.length > 0 && await Promise.all(
       docs.map(async (cloudObj) => deleteFromCloudinary(cloudObj.public_id))
     );
     res.status(500).json({
@@ -214,13 +207,11 @@ const getEmployeeTasks = async (req, res) => {
 
 const assignTask = async (taskId, to) => {
   try {
-    const updatedUser = await userModel
-      .findByIdAndUpdate(
-        to,
-        { $addToSet: { Tasks: taskId } }, // prevents duplicates
-        { new: true } // return updated user
-      )
-      .populate("Tasks", "title description priority due_date status");
+    const updatedUser = await User.findByIdAndUpdate(
+      to,
+      { $addToSet: { Tasks: taskId } }, // prevents duplicates
+      { new: true } // return updated user
+    ).populate("Tasks", "title description priority due_date status");
 
     return updatedUser;
   } catch (error) {

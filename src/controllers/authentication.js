@@ -1,11 +1,16 @@
 import { userModel } from "../models/User.model.js";
 // import fs from "fs";
+import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
+import Otp from "../models/otp.model.js";
 
 import uploadOnCloudinary, {
   deleteFromCloudinary,
 } from "../utils/Cloudinary.js";
 import { isUserExists } from "../utils/IsUserExists.js";
 import { generateToken } from "../utils/generateToken.js";
+import { hashOTP } from "../utils/otp.js";
+import { sendMail } from "../utils/nodemailer.js";
 
 const userLogin = async (req, res) => {
   try {
@@ -337,6 +342,72 @@ const getUserById = async (req, res) => {
   }
 };
 
+const forgotPassword = async (req, res) => {
+  const { Email } = req.body;
+
+  const user = await isUserExists(Email);
+
+  console.log("user", user);
+
+  if (!user) {
+    return res.status(404).json({
+      success: false,
+      message: "user not found",
+    });
+  }
+
+  await sendMail(Email);
+
+  res.status(200).json({ message: "Mail Send", success: true });
+};
+
+const updatePassword = async (req, res) => {
+  const { email, token, password } = req.body;
+
+  try {
+    const decoded = jwt.verify(token, process.env.SECRET_TOKEN);
+    // console.log(decoded);
+    if (decoded.email !== email) {
+      return res.status(403).send("Token email mismatch");
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    await userModel.findOneAndUpdate(
+      { Email: email },
+      { Password: hashedPassword }
+    );
+
+    // console.log(user);
+
+    res.send("Password has been updated successfully.");
+  } catch (err) {
+    console.error("Reset failed:", err.message);
+    res.status(400).send("Invalid or expired token.");
+  }
+};
+
+const verifyOtp = async (req, res) => {
+  const { email, otp } = req.query;
+  if (!email || !otp) return res.status(400).json({ error: "Missing fields" });
+
+  const otpHash = hashOTP(otp);
+
+  const otpRecord = await Otp.findOne({ email, otpHash });
+
+  if (!otpRecord)
+    return res.status(401).json({ error: "Invalid or expired OTP" });
+
+  // OTP is valid. Delete it for one-time use
+  await Otp.deleteOne({ _id: otpRecord._id });
+
+  const token = jwt.sign({ email }, process.env.SECRET_TOKEN, {
+    expiresIn: "10m",
+  });
+  // console.log(token);
+  // Proceed to show password reset form or token
+  res.render("resetPassword", { email, token });
+};
+
 export {
   userLogin,
   userSignUp,
@@ -344,4 +415,7 @@ export {
   deleteUser,
   getUserById,
   getAllEmp,
+  forgotPassword,
+  updatePassword,
+  verifyOtp,
 };

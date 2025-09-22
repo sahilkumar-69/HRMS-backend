@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   deleteUser,
+  forgotPassword,
   getAllEmp,
   getUserById,
   updateUser,
@@ -21,6 +22,8 @@ Route.route("/add-employee").post(
   uploadProfilePic.single("Profile"),
   userSignUp
 );
+
+Route.route("/forgotpassword").post(forgotPassword)
 
 Route.route("/update-user/:id").patch(authMiddleware, updateUser);
 
