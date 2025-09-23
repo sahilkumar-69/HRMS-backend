@@ -98,6 +98,7 @@ const createTask = async (req, res) => {
 // Get all tasks (or filter by role/assignee)
 const getTasks = async (req, res) => {
   try {
+
     let query = {};
 
     // If employee → show only their tasks
@@ -107,11 +108,13 @@ const getTasks = async (req, res) => {
 
     // HR, TL, Owner can see all tasks
     const tasks = await Task.find()
-      .populate("assignee", "firstName lastName email role")
-      // .populate("createdBy", "firstName lastName email role")
+      .populate("assignee", "FirstName LastName Email Role")
+      .populate("assigner", "FirstName LastName Email Role")
+      // .populate("assigner", "FirstName LastName Email Role")
       .sort({ dueDate: 1 });
 
     res.json(tasks);
+    
   } catch (error) {
     res
       .status(500)

@@ -30,7 +30,25 @@ const userLogin = async (req, res) => {
       });
     }
 
-    const isExists = await userModel.findOne({ Email });
+    const isExists = await userModel.findOne({ Email }).populate({
+      path: "Tasks",
+      select:
+        "title description priority startDate dueDate assignee assigner status",
+      populate: [
+        { path: "assignee", select: "FirstName LastName Email Role" },
+        { path: "assigner", select: "FirstName LastName Email Role" },
+      ],
+    }).populate({
+       path: "Tasks",
+      select:
+        "title description priority startDate dueDate assignee assigner status",
+      populate: [
+        { path: "assignee", select: "FirstName LastName Email Role" },
+        { path: "assigner", select: "FirstName LastName Email Role" },
+      ],
+    })
+    //
+
     if (!isExists) {
       return res.status(404).json({
         success: false,
