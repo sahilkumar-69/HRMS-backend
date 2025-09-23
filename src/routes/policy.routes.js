@@ -5,12 +5,18 @@ import {
   updatePolicy,
   getPolicy,
 } from "../controllers/policy.controller.js";
+import { upload } from "../middleware/upload.js";
 
 const policyRouter = express.Router();
 
-policyRouter.post("/add-policy", authMiddleware, addPolicy);
+policyRouter.post("/add-policy", upload.none(), authMiddleware, addPolicy);
 
-policyRouter.patch("/update-policy", authMiddleware, updatePolicy);
+policyRouter.patch(
+  "/update-policy",
+  upload.none(),
+  authMiddleware,
+  updatePolicy
+);
 
 policyRouter.get("/get-policy", getPolicy);
 
