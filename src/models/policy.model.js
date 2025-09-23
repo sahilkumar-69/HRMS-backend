@@ -15,7 +15,7 @@ const policy_schema = new Schema(
       required: true,
     },
   },
-  { timestamps: true }
+  { timestamps: true }  
 );
 
 export const policies = model("policies", policy_schema);
