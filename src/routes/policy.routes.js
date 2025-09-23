@@ -12,6 +12,6 @@ policyRouter.post("/add-policy", authMiddleware, addPolicy);
 
 policyRouter.patch("/update-policy", authMiddleware, updatePolicy);
 
-policyRouter.get("/get-policy", authMiddleware, getPolicy);
+policyRouter.get("/get-policy", getPolicy);
 
 export { policyRouter as policyRoutes };
