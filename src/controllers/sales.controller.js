@@ -82,10 +82,10 @@ const addSale = async (req, res) => {
 
 // function to get all sales data --->protected
 const getSales = async (req, res) => {
-  const { Department } = req.user;
+  const { Department, Role } = req.user;
 
   //  check if user belong to SALES department
-  if (Department !== "SALES") {
+  if (Department !== "SALES" && Role !== "ADMIN") {
     return res.json({
       success: false,
       message: "Only for Sales department ",
