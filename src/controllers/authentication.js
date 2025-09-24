@@ -282,7 +282,7 @@ const updateUser = async (req, res) => {
 
 const deleteUser = async (req, res) => {
   try {
-    const { id } = req.body;
+    const { id } = req.params;
 
     if (id && id.trim()) {
       const isDeleted = await userModel.findByIdAndDelete(id);

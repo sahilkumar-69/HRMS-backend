@@ -1,7 +1,7 @@
 import { policies } from "../models/policy.model.js";
 
 const addPolicy = async (req, res) => {
-  const { heading, subHeading, descriptions } = req.body;
+  const body = req.body;
 
   const { Role } = req.user;
   try {
@@ -13,12 +13,7 @@ const addPolicy = async (req, res) => {
     }
 
     //   if(heading || subHeading || descriptions)
-
-    const policy = await policies.create({
-      heading,
-      subHeading,
-      descriptions,
-    });
+    const policy = await policies.create(body);
 
     policy
       ? res.json({ message: "Policy added", success: true, policy })
@@ -30,7 +25,10 @@ const addPolicy = async (req, res) => {
     });
   }
 };
+
+
 const updatePolicy = async (req, res) => {
+
   try {
     const policy = await policies.find();
 
@@ -44,6 +42,8 @@ const updatePolicy = async (req, res) => {
     });
   }
 };
+
+
 const getPolicy = async (req, res) => {
   try {
     const policy = await policies.find();
