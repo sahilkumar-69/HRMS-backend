@@ -27,7 +27,7 @@ Route.route("/forgotpassword").post(forgotPassword)
 
 Route.route("/update-user/:id").patch(authMiddleware, updateUser);
 
-Route.route("/delete-user").delete(deleteUser);
+Route.route("/delete-user/:id").delete(deleteUser);
 
 Route.route("/user/:id").get(getUserById);
 

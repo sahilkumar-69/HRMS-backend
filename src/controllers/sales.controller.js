@@ -95,7 +95,7 @@ const getSales = async (req, res) => {
     const allSales = await sales
       .find()
       .populate("employee", "FirstName LastName Email ")
-      .sort({ createAt: -1 }); // sort the sale --> newest first
+      .sort({ createdAt: -1 }); // sort the sale --> newest first
 
     res.json({
       success: true,

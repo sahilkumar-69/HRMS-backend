@@ -21,7 +21,7 @@ import path from "path";
 
 const app = express();
 
-// const server = createServer(app);
+const server = createServer(app);
 
 const allowedOrigins = [
   "http://localhost:5173",
@@ -29,7 +29,7 @@ const allowedOrigins = [
   "http://localhost:3001",
 ];
 
-// initiateServer(server);
+initiateServer(server);
 
 app.set("view engine", "ejs");
 
@@ -85,8 +85,7 @@ app.use("/api/sales", salesRouter);
 
 app.use("/api/reset-password", otpRouter);
 
-
-app.listen(4343, async (err) => {
+server.listen(4343, async (err) => {
   if (err) return console.log("error while listning", err);
   dbConnect().then(() => {
     console.log(`server is running on 4343`);
