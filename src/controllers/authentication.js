@@ -97,6 +97,7 @@ const userSignUp = async (req, res) => {
     Dob,
     Department,
     // Designation,
+    Salary,
     Permissions,
     Address,
     Role,
@@ -116,6 +117,7 @@ const userSignUp = async (req, res) => {
       Email,
       Phone,
       Dob,
+      Salary,
       Department,
       // Designation,
       Role,
@@ -186,10 +188,11 @@ const userSignUp = async (req, res) => {
       Address,
       JoiningDate,
       EmergencyPhone,
+      Salary,
       EmergencyName,
       EmergencyRelation,
       Role,
-      AllowedTabs: AllowedTabs,
+      AllowedTabs,
       Password,
     });
 

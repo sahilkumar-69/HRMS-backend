@@ -18,6 +18,8 @@ import { initiateServer } from "./src/utils/socketIO.js";
 import { salesRouter } from "./src/routes/sales.routes.js";
 import otpRouter from "./src/routes/otp.routes.js";
 import path from "path";
+import { authMiddleware } from "./src/middleware/authMiddleware.js";
+import { paymentRoutes } from "./src/routes/payment.routes.js";
 
 const app = express();
 
@@ -84,6 +86,8 @@ app.use("/api/policy", policyRoutes);
 app.use("/api/sales", salesRouter);
 
 app.use("/api/reset-password", otpRouter);
+
+app.use("/api/payment", authMiddleware, paymentRoutes);
 
 server.listen(4343, async (err) => {
   if (err) return console.log("error while listning", err);
