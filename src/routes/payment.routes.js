@@ -7,24 +7,25 @@ import {
   updatePaymentStatus,
   deletePayment,
 } from "../controllers/payment.controller.js";
+import { authMiddleware } from "../middleware/authMiddleware.js";
 
 const paymentRoutes = Router();
 
 // HR creates salary record
-paymentRoutes.post("/", createPayment);
+paymentRoutes.post("/", authMiddleware, createPayment);
 
 // HR & Admin view
-paymentRoutes.get("/", getAllPayments);
+paymentRoutes.get("/", authMiddleware, getAllPayments);
 
-paymentRoutes.get("/:id", getPaymentById);
+paymentRoutes.get("/:id", authMiddleware, getPaymentById);
 
 // HR updates before approval
-paymentRoutes.put("/:id", updatePayment);
+paymentRoutes.put("/:id", authMiddleware, updatePayment);
 
 // Admin updates status
-paymentRoutes.patch("/:id/status", updatePaymentStatus);
+paymentRoutes.patch("/:id/status", authMiddleware, updatePaymentStatus);
 
 // optional delete
-paymentRoutes.delete("/:id", deletePayment);
+paymentRoutes.delete("/:id", authMiddleware, deletePayment);
 
 export { paymentRoutes };

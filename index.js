@@ -43,10 +43,14 @@ app.use(bodyParser.json());
 
 app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 
-app.use(cors());
+app.use(
+  cors({
+    origin: "*",
+  })
+);
 
-app.get("/home", (req, res) => {
-  res.send("api is live");
+app.get("/", (req, res) => {
+  res.send("Server is live");
 });
 
 // User related routes
@@ -87,7 +91,7 @@ app.use("/api/sales", salesRouter);
 
 app.use("/api/reset-password", otpRouter);
 
-app.use("/api/payment", authMiddleware, paymentRoutes);
+app.use("/api/payment", paymentRoutes);
 
 server.listen(4343, async (err) => {
   if (err) return console.log("error while listning", err);
