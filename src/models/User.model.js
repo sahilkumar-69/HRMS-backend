@@ -32,10 +32,6 @@ const userSchema = new mongoose.Schema(
     // Job-related info
     Department: { type: String, required: true },
 
-    Tasks: [{ type: mongoose.Schema.Types.ObjectId, ref: "Task" }],
-
-    // Designation: { type: String, require: true },
-
     JoiningDate: { type: Date, default: Date.now },
     // Security
     Password: { type: String, required: true }, // should be hashed with bcrypt
@@ -47,13 +43,9 @@ const userSchema = new mongoose.Schema(
     // ManagerId: { type: Schema.Types.ObjectId, ref: "User" }, // self-reference for reporting
     Address: { type: String, require: true },
 
+    Salary: { type: Number, require: true },
+
     AllowedTabs: [{ type: String }],
-
-    Notifications: [
-      { type: mongoose.Schema.Types.ObjectId, ref: "notifications" },
-    ],
-
-    Leaves: [{ type: mongoose.Schema.Types.ObjectId, ref: "leaveModel" }],
 
     EmergencyName: {
       type: String,
@@ -70,13 +62,23 @@ const userSchema = new mongoose.Schema(
       require: true,
     },
 
-    JoinedTeams: [{ type: Schema.Types.ObjectId, ref: "Team" }],
-
     Role: {
       type: String,
       enum: ["HR", "EMPLOYEE", "TL", "ADMIN"],
       require: true,
     },
+
+    Tasks: [{ type: mongoose.Schema.Types.ObjectId, ref: "Task" }],
+
+    Notifications: [
+      { type: mongoose.Schema.Types.ObjectId, ref: "notifications" },
+    ],
+
+    Leaves: [{ type: mongoose.Schema.Types.ObjectId, ref: "leaveModel" }],
+
+    PaymentHistory: [{ type: Schema.Types.ObjectId, ref: "payment" }],
+
+    JoinedTeams: [{ type: Schema.Types.ObjectId, ref: "Team" }],
 
     createdBy: { type: Schema.Types.ObjectId, ref: "userModel" },
 
