@@ -28,7 +28,7 @@ const server = createServer(app);
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:5174",
-  "http://localhost:3001",
+  "http://localhost:5175",
 ];
 
 initiateServer(server);
@@ -45,7 +45,14 @@ app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 
 app.use(
   cors({
-    origin: "*",
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true, // if you are sending cookies/JWT in headers
   })
 );
 
