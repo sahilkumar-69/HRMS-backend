@@ -43,7 +43,11 @@ app.use(bodyParser.json());
 
 app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 
-app.use(cors());
+app.use(
+  cors({
+    origin: "*",
+  })
+);
 
 app.get("/", (req, res) => {
   res.send("Server is live");
