@@ -4,8 +4,13 @@ import { userModel as User } from "../models/User.model.js";
 // 1. Create salary record (HR initiates)
 export const createPayment = async (req, res) => {
   try {
-    const { employee, grossSalary, otherDeductions, remarks, month, year } =
-      req.body;
+    const {
+      _id: employee,
+      grossSalary,
+      otherDeductions,
+      month,
+      year,
+    } = req.body;
 
     const { Role } = req.user;
 
@@ -37,7 +42,6 @@ export const createPayment = async (req, res) => {
       employee,
       grossSalary,
       otherDeductions,
-      remarks,
       month,
       year,
       status: "Pending",
@@ -159,7 +163,7 @@ export const updatePaymentStatus = async (req, res) => {
     }
 
     payment.status = status;
-    if (remarks) payment.remarks = remarks;
+    if (remarks) payment.otherDeductions.remarks = remarks;
     if (status === "Paid") payment.paymentDate = new Date();
 
     await payment.save();
