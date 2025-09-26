@@ -10,9 +10,11 @@ const payment_Schema = new Schema(
 
     grossSalary: { type: Number, required: true },
 
-    otherDeductions: { type: Number, default: 0 },
-
-    remarks: String,
+    otherDeductions: {
+      leaveDays: Number,
+      lateComming: Number,
+      remarks: String,
+    },
 
     month: { type: String, required: true },
 

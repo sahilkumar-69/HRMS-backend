@@ -17,6 +17,7 @@ paymentRoutes.post("/", authMiddleware, createPayment);
 // HR & Admin view
 paymentRoutes.get("/", authMiddleware, getAllPayments);
 
+
 paymentRoutes.get("/:id", authMiddleware, getPaymentById);
 
 // HR updates before approval
