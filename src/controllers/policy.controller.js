@@ -32,6 +32,11 @@ const addPolicy = async (req, res) => {
 
       docs.public_id = uploads.response.public_id;
       docs.secure_url = uploads.response.secure_url;
+    }else{
+       return res.status(404).json({
+          success: false,
+          message: "File upload failed from user",
+        });
     }
 
     //  Optional: restrict to one active policy at a time
