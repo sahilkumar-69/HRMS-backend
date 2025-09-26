@@ -29,7 +29,6 @@ const uploadOnCloudinary = async (tempLink, folder_name) => {
 export const deleteFromCloudinary = async (public_id) => {
   try {
     const deletePhoto = await cloudinary.uploader.destroy(public_id);
-    console.log("deleteBrochure ", deletePhoto);
     return {
       message: "Deleted from cloudinary",
       success: true,
