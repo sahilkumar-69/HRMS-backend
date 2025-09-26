@@ -41,7 +41,7 @@ app.use(express.json());
 
 app.use(bodyParser.json());
 
-app.use(express.urlencoded({ extended: true, limit: "10kb" }));
+app.use(express.urlencoded({ extended: true, limit: "15mb" }));
 
 app.use(
   cors({
