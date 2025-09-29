@@ -3,7 +3,11 @@ import { policies } from "../models/policy.model.js";
 import uploadOnCloudinary, {
   deleteFromCloudinary,
 } from "../utils/Cloudinary.js";
+import { getIo } from "../utils/socketIO.js";
+
 const addPolicy = async (req, res) => {
+  const io = getIo();
+
   const { Role } = req.user;
   let docs = {
     public_id: "",
@@ -32,11 +36,11 @@ const addPolicy = async (req, res) => {
 
       docs.public_id = uploads.response.public_id;
       docs.secure_url = uploads.response.secure_url;
-    }else{
-       return res.status(404).json({
-          success: false,
-          message: "File upload failed from user",
-        });
+    } else {
+      return res.status(404).json({
+        success: false,
+        message: "File upload failed from user",
+      });
     }
 
     //  Optional: restrict to one active policy at a time
@@ -44,6 +48,10 @@ const addPolicy = async (req, res) => {
 
     //  Save to DB
     const policy = await policies.create(docs);
+
+    io.emit("policyAdded", {
+      policy,
+    });
 
     return res.status(201).json({
       success: true,
@@ -65,6 +73,8 @@ const addPolicy = async (req, res) => {
 };
 
 const updatePolicy = async (req, res) => {
+  const io = getIo();
+
   let docs = {
     public_id: "",
     secure_url: "",
@@ -101,6 +111,10 @@ const updatePolicy = async (req, res) => {
       // If no policy exists, create new
       policy = await policies.create(docs);
     }
+
+    io.emit("policyUpdated", {
+      policy,
+    });
 
     return res.json({
       message: "Policy updated successfully",
@@ -146,6 +160,8 @@ const getPolicy = async (req, res) => {
 };
 
 const deletePolicy = async (req, res) => {
+  const io = getIo();
+
   const { Role } = req.user;
   const { id } = req.params;
 
@@ -174,6 +190,10 @@ const deletePolicy = async (req, res) => {
 
     //   Delete from DB
     await policy.deleteOne();
+
+    io.emit("policyDeleted", {
+      policy,
+    });
 
     return res.status(200).json({
       success: true,

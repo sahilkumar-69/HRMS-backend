@@ -12,8 +12,13 @@ export const initiateServer = (server) => {
   io.on("connection", (socket) => {
     console.log("connected to socket", socket.id);
 
-    socket.on("register", (userId) => {
+    socket.on("register", ({ userId, Role }) => {
       socket.userId = userId;
+
+      socket.join(userId);
+
+      socket.join(Role);
+
       console.log(`User ${userId} registered with ${socket.id}`);
     });
 
