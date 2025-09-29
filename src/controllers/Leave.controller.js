@@ -3,14 +3,17 @@ import Leave from "../models/leave.model.js";
 import { userModel } from "../models/User.model.js";
 import { daysBetween } from "../utils/calculateDays.js";
 import { isValidObjectId } from "mongoose";
+import { getIo } from "../utils/socketIO.js";
 
 // Employee applies for leave
 export const createLeave = async (req, res) => {
+  const io = getIo();
+
   try {
     const { leaveType, from, to, reason } = req.body;
 
-    console.log(req.body);
-    console.log(req.user);
+    // console.log(req.body);
+    // console.log(req.user);
 
     if (!leaveType || !from || !to || !reason) {
       return res
@@ -30,8 +33,20 @@ export const createLeave = async (req, res) => {
       days,
     });
 
-    await userModel.findByIdAndUpdate(req.user._id, {
-      $addToSet: { Leaves: leave._id },
+    await userModel.findByIdAndUpdate(
+      req.user._id,
+      {
+        $addToSet: { Leaves: leave._id },
+      },
+      {
+        new: true,
+      }
+    );
+
+    io.to(["ADMIN", "HR"]).emit("leaveApplied", {
+      employeeName: `${req.user.FirstName} ${req.user.LastName}`,
+      leaveType,
+      leave,
     });
 
     return res.status(201).json({
@@ -89,8 +104,53 @@ export const getUserLeaves = async (req, res) => {
   }
 };
 
-// HR updates leave status (approve/reject)
+export const cancelRequest = async (req, res) => {
+  const { id } = req.params;
+  const io = getIo();
+
+  if (!isValidObjectId(id)) {
+    return res.json({
+      message: "Invalid id",
+      success: false,
+    });
+  }
+  try {
+    const leave = await Leave.findOneAndDelete({ _id: id });
+
+    if (!leave) {
+      return res.json({
+        message: "Leave not found",
+        success: false,
+      });
+    }
+
+    await userModel.findOneAndUpdate(
+      { _id: leave.employee },
+      {
+        $pull: {
+          Leaves: leave._id,
+        },
+      },
+      {
+        new: true,
+      }
+    );
+
+    return res.json({
+      message: "Leave cancelled successfully",
+      success: true,
+    });
+  } catch (error) {
+    res.json({
+      message: error.message,
+      success: false,
+    });
+  }
+};
+// ADMIN updates leave status (approve/reject)
 export const updateLeaveStatus = async (req, res) => {
+  const io = getIo();
+
   try {
     const { leaveId } = req.params;
     const { status } = req.body;
@@ -101,7 +161,7 @@ export const updateLeaveStatus = async (req, res) => {
         .json({ success: false, message: "Invalid status" });
     }
 
-    const { Role } = req.user;
+    const { Role, FirstName, LastName } = req.user;
 
     if (Role !== "ADMIN") {
       return res.json({
@@ -122,10 +182,24 @@ export const updateLeaveStatus = async (req, res) => {
         .json({ success: false, message: "Leave not found" });
     }
 
+    // Notify the employee
+    io.to(leave.employee._id.toString()).emit("leaveUpdate", {
+      leaveId: leave._id,
+      status: leave.status,
+      message: `Your leave request has been ${leave.status} by ${FirstName} ${LastName}`,
+    });
+
+    // Notify HRs
+    io.to("HR").emit("leaveUpdate", {
+      leaveId: leave._id,
+      status: leave.status,
+      message: `${FirstName} ${LastName} has ${leave.status} ${leave.employee.FirstName} ${leave.employee.LastName}'s leave request`,
+    });
+
     return res.json({ success: true, message: "Leave updated", leave });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });
   }
 };
 
-export const takenLeaves = async (req, res) => {};
+// export const takenLeaves = async (req, res) => {};

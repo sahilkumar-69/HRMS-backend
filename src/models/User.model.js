@@ -105,6 +105,8 @@ userSchema.methods.generateAccessToken = function () {
     {
       _id: this._id,
       Permissions: this.Permissions,
+      FirstName: this.FirstName,
+      lastName: this.lastName,
       Email: this.Email,
       Role: this.Role,
     },

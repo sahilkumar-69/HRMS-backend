@@ -1,10 +1,14 @@
 import Task from "../models/task.model.js";
-import { userModel as User } from "../models/User.model.js";
+import { userModel as User, userModel } from "../models/User.model.js";
 import uploadOnCloudinary, {
   deleteFromCloudinary,
 } from "../utils/Cloudinary.js";
 
 const createTask = async (req, res) => {
+  const io = getIo();
+
+  let docs = [];
+
   try {
     const {
       title,
@@ -18,22 +22,35 @@ const createTask = async (req, res) => {
 
     // console.log(req.body);
     // Validate required fields
-    if (!title || !description || !priority || !dueDate || !assigner) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Missing required fields" });
+    if (
+      !title ||
+      !description ||
+      !priority ||
+      !dueDate ||
+      !assigner ||
+      !assignee ||
+      !Array.isArray(assignee) ||
+      assignee.length === 0
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing required fields or choose atleast one assignee",
+      });
     }
 
-    //  Validate assignee exists
-    // const assigneeUser = await User.findById(assignee);
-    // if (!assigneeUser) {
-    //   return res
-    //     .status(404)
-    //     .json({ success: false, message: "Assignee not found" });
-    // }
+    // validate all assignees
+    const validatedAssignees = await userModel.find({ _id: { $in: assignee } });
+
+    if (validatedAssignees.length !== assignee.length) {
+      return res.json({
+        message: "One or more assignees not found",
+        success: false,
+      });
+    }
 
     //  Validate assigner exists
     const assignerUser = await User.findById(assigner);
+
     if (!assignerUser) {
       return res
         .status(404)
@@ -45,8 +62,6 @@ const createTask = async (req, res) => {
         .status(404)
         .json({ success: false, message: "Assignee not found" });
     }
-
-    var docs = [];
 
     if (req.files && req.files.length > 0) {
       // Wait for all uploads in parallel
@@ -79,15 +94,25 @@ const createTask = async (req, res) => {
 
     await assignTask(task._id, assignee);
 
+    // Notify all assignees at once with the same message
+    io.to(assignee.map((id) => id.toString())).emit("newTaskAssigned", {
+      taskId: task._id,
+      title: task.title,
+      priority: task.priority,
+      dueDate: task.dueDate,
+      message: `New task assigned: "${task.title}" by ${assignerUser.FirstName} ${assignerUser.LastName}`,
+    });
+
     res.status(201).json({
       success: true,
       message: "Task created successfully",
       task,
     });
   } catch (error) {
-    docs.length > 0 && await Promise.all(
-      docs.map(async (cloudObj) => deleteFromCloudinary(cloudObj.public_id))
-    );
+    docs.length > 0 &&
+      (await Promise.all(
+        docs.map(async (cloudObj) => deleteFromCloudinary(cloudObj.public_id))
+      ));
     res.status(500).json({
       success: false,
       message: "Error creating task",
@@ -98,7 +123,6 @@ const createTask = async (req, res) => {
 // Get all tasks (or filter by role/assignee)
 const getTasks = async (req, res) => {
   try {
-
     let query = {};
 
     // If employee → show only their tasks
@@ -114,7 +138,6 @@ const getTasks = async (req, res) => {
       .sort({ dueDate: 1 });
 
     res.json(tasks);
-    
   } catch (error) {
     res
       .status(500)
@@ -214,7 +237,7 @@ const assignTask = async (taskId, to) => {
       to,
       { $addToSet: { Tasks: taskId } }, // prevents duplicates
       { new: true } // return updated user
-    ).populate("Tasks", "title description priority due_date status");
+    ).populate("Tasks", "title description priority dueDate status");
 
     return updatedUser;
   } catch (error) {

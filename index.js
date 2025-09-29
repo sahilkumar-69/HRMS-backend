@@ -20,18 +20,20 @@ import otpRouter from "./src/routes/otp.routes.js";
 import path from "path";
 import { authMiddleware } from "./src/middleware/authMiddleware.js";
 import { paymentRoutes } from "./src/routes/payment.routes.js";
+import expenseRoutes from "./src/routes/expense.routes.js";
 
 const app = express();
 
 const server = createServer(app);
+
+initiateServer(server);
+
 
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:5174",
   "http://localhost:5175",
 ];
-
-initiateServer(server);
 
 app.set("view engine", "ejs");
 
@@ -99,6 +101,8 @@ app.use("/api/sales", salesRouter);
 app.use("/api/reset-password", otpRouter);
 
 app.use("/api/payment", paymentRoutes);
+
+app.use("/api/expense", expenseRoutes);
 
 server.listen(4343, async (err) => {
   if (err) return console.log("error while listning", err);
