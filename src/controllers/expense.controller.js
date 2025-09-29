@@ -11,7 +11,7 @@ export const createExpense = async (req, res) => {
 
     const { Role, FirstName, LastName } = req.user;
 
-    if (!title.trim() || !description.trim() || !amount) {
+    if (!title.toString().trim() || !description.toString().trim() || !amount) {
       return res.status(400).json({
         success: false,
         message: "All fields are required",
@@ -56,8 +56,7 @@ export const createExpense = async (req, res) => {
 };
 
 export const updateExpense = async (req, res) => {
-
-const io = getIo();
+  const io = getIo();
 
   const { id } = req.params;
   const { title, description, amount } = req.body;
@@ -115,7 +114,7 @@ const io = getIo();
 };
 
 export const deleteExpense = async (req, res) => {
-    const io = getIo();
+  const io = getIo();
   const { id } = req.params;
   const { Role, FirstName, LastName } = req.user;
 
@@ -194,9 +193,10 @@ export const getExpenseById = async (req, res) => {
 };
 
 export const getExpenses = async (req, res) => {
+  
   const { Role } = req.user;
 
-  if (Role) {
+  if (Role !== "HR" && Role !== "ADMIN") {
     return res.json({
       message: "Can't access",
       success: false,
