@@ -11,7 +11,7 @@ const expense_schema = new Schema(
       required: true,
     },
     amount: {
-      type: String,
+      type: Number,
       required: true,
     },
     createdBy: { type: Schema.Types.ObjectId, ref: "users" },
