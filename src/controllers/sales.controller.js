@@ -3,11 +3,11 @@ import uploadOnCloudinary, {
   deleteFromCloudinary,
 } from "../utils/Cloudinary.js";
 import { sendNotification } from "../utils/sendNotification.js";
-import { userModel as User } from "../models/user.model.js";
+import { userModel as User } from "../models/User.model.js";
 
 // function for add new sale
 
-export const addSale = async (req, res) => {
+const addSale = async (req, res) => {
   const { heading, subHeading, description, type, budget } = req.body;
   const { Department, _id: employeeId, FirstName, LastName } = req.user;
 

@@ -21,8 +21,6 @@ export const addAdministrationEntrie = async (req, res) => {
     await newEntry.save();
 
     return res.json(newEntry);
-
-  
   } catch (error) {
     res
       .status(500)

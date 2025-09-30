@@ -25,7 +25,7 @@ export const givePolicyEditPermissionToHr = async (req, res) => {
       });
     }
 
-    // ✅ Notify the HR about the new permission
+    //  Notify the HR about the new permission
     await sendNotification({
       recipients: hr._id,
       title: "Policy Edit Permission Granted",
@@ -60,7 +60,7 @@ export const removePolicyPermissionFromHr = async (req, res) => {
   try {
     const hr = await userModel.findOneAndUpdate(
       { Role: "HR" },
-      { $pull: { Permissions: "EDIT_POLICY" } }, // ✅ corrected field value
+      { $pull: { Permissions: "EDIT_POLICY" } }, //  corrected field value
       { new: true }
     );
 
@@ -71,7 +71,7 @@ export const removePolicyPermissionFromHr = async (req, res) => {
       });
     }
 
-    // ✅ Notify the HR about permission removal
+    //  Notify the HR about permission removal
     await sendNotification({
       recipients: hr._id,
       title: "Policy Edit Permission Removed",

@@ -1,5 +1,5 @@
 import Task from "../models/task.model.js";
-import { userModel as User, userModel } from "../models/User.model.js";
+import { userModel as User } from "../models/User.model.js";
 import uploadOnCloudinary, {
   deleteFromCloudinary,
 } from "../utils/Cloudinary.js";
