@@ -1,45 +1,57 @@
 import teamModel from "../models/team.model.js";
 import { userModel } from "../models/User.model.js";
-
+import { sendNotification } from "../utils/sendNotification.js";
 // Create a new team
 const createTeam = async (req, res) => {
   try {
+    const { FirstName, LastName } = req.user;
     const { name, description, lead, members } = req.body;
 
     // Validate lead exists
     const leadUser = await userModel.findById(lead);
-
     if (!leadUser || leadUser.Role !== "TL") {
       return res.status(400).json({ message: "Invalid team lead" });
     }
 
-    var team = new teamModel({
+    // Create team
+    const team = new teamModel({
       name,
       description,
       lead,
       members,
       createdBy: req.user._id, // HR or Owner
     });
-
     await team.save();
 
+    // Update each member's JoinedTeams
     const teamMembers = await userModel.find({ _id: { $in: members } });
-
     await Promise.all(
       teamMembers.map(async (member) => {
         member.JoinedTeams.push(team._id);
         await member.save();
       })
     );
-    // console.log(teamMembers);
 
-    res
+    // Send notifications (real-time + DB)
+    await sendNotification({
+      recipients: members.map((id) => id.toString()),
+      title: "New Team",
+      message: `${FirstName} ${LastName} added you to a new team "${name}"`,
+      data: {
+        teamId: team._id,
+        teamLead: `${leadUser.FirstName} ${leadUser.LastName}`,
+      },
+    });
+
+    return res
       .status(201)
       .json({ success: true, message: "Team created successfully", team });
   } catch (error) {
-    await teamModel.findByIdAndDelete(team._id);
+    if (team?._id) {
+      await teamModel.findByIdAndDelete(team._id); // rollback safely
+    }
 
-    res
+    return res
       .status(500)
       .json({ message: "Error creating team", error: error.message });
   }
@@ -99,7 +111,6 @@ const getTeamsById = async (req, res) => {
 
 const getJoinedTeams = async (req, res) => {
   try {
-
     const { Role } = req.user;
 
     const { id } = req.params;
@@ -153,7 +164,7 @@ const updateTeam = async (req, res) => {
       return res.status(404).json({ message: "Team not found" });
     }
 
-    // ✅ validate lead
+    //  validate lead
     if (updates.lead) {
       const leadExists = await userModel.findById(updates.lead);
       if (!leadExists) {
@@ -161,7 +172,7 @@ const updateTeam = async (req, res) => {
       }
     }
 
-    // ✅ validate members
+    //  validate members
     if (updates.members && updates.members.length > 0) {
       const membersExist = await userModel.find({
         _id: { $in: updates.members },
@@ -171,14 +182,28 @@ const updateTeam = async (req, res) => {
       }
     }
 
-    // ✅ merge updates instead of replace
+    //  merge updates instead of replace
     Object.assign(team, updates);
     await team.save();
 
+    //  re-populate
     team = await teamModel
       .findById(id)
       .populate("lead", "FirstName LastName Role Email")
       .populate("members", "FirstName LastName Role Email");
+
+    //  prepare notification
+    const notificationParams = {
+      recipient: team.members.map((m) => m._id.toString()), // notify all members
+      message: `Team "${team.name}" has been updated.`,
+      title: "Team Update",
+      data: {
+        teamId: team._id,
+        updatedFields: updates, // optional: include which fields changed
+      },
+    };
+
+    await sendNotification(notificationParams);
 
     res.json({ message: "Team updated successfully", team });
   } catch (error) {
@@ -191,13 +216,12 @@ const updateTeam = async (req, res) => {
 const addMembers = async (req, res) => {
   try {
     const { teamId } = req.params;
-
     const { userIds } = req.body;
-    console.log(userIds);
+    const { FirstName, LastName, Role } = req.user;
 
-    if (req.user.Role === "EMPLOYEE" || req.user.Role === "HR") {
+    if (Role !== "TL" && Role !== "ADMIN") {
       return res.json({
-        message: "Only team lead or admin can made changes to the team",
+        message: "Only team lead or admin can make changes to the team",
         success: false,
       });
     }
@@ -205,33 +229,33 @@ const addMembers = async (req, res) => {
     const updatedTeam = await teamModel
       .findByIdAndUpdate(
         teamId,
-        {
-          $addToSet: { members: { $each: userIds } },
-        },
-        {
-          new: true,
-        }
+        { $addToSet: { members: { $each: userIds } } },
+        { new: true }
       )
-      .populate("members", "FirstName LastName Email");
+      .populate("members", "FirstName LastName Email")
+      .populate("lead", "FirstName LastName Email");
 
-    if (!updatedTeam)
-      return res.json({
-        message: "team not found",
-        success: false,
-      });
+    if (!updatedTeam) {
+      return res.json({ message: "Team not found", success: false });
+    }
 
-    const updatedUser = await userModel
-      .updateMany(
-        { _id: { $in: userIds } },
-        {
-          $addToSet: {
-            JoinedTeams: teamId,
-          },
-        }
-      )
-      .select("JoinedTeams");
+    await userModel.updateMany(
+      { _id: { $in: userIds } },
+      { $addToSet: { JoinedTeams: teamId } }
+    );
 
-    console.log(updatedUser);
+    //  notification logic
+    const notificationParams = {
+      recipient: userIds.map((id) => id.toString()),
+      message: `${FirstName} ${LastName} added you to team "${updatedTeam.name}"`,
+      title: "Added to Team",
+      data: {
+        teamId: updatedTeam._id,
+        teamLead: `${updatedTeam.lead.FirstName} ${updatedTeam.lead.LastName}`,
+      },
+    };
+
+    await sendNotification(notificationParams); // handles both online & offline
 
     return res.json({ success: true, team: updatedTeam });
   } catch (error) {
@@ -242,9 +266,16 @@ const addMembers = async (req, res) => {
 const removeMembers = async (req, res) => {
   try {
     const { teamId } = req.params;
-
     const { userIds } = req.body;
 
+    if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+      return res.json({
+        message: "userIds are missing or not an array",
+        success: false,
+      });
+    }
+
+    //  Update team by removing members
     const updatedTeam = await teamModel
       .findByIdAndUpdate(
         teamId,
@@ -259,12 +290,22 @@ const removeMembers = async (req, res) => {
         .json({ success: false, message: "Team not found" });
     }
 
+    //  Remove team from users’ JoinedTeams
     await userModel.updateMany(
       { _id: { $in: userIds } },
       { $pull: { JoinedTeams: teamId } }
     );
 
-    res.json({
+    //  Persist notification for offline users too
+    const notificationParams = {
+      recipient: userIds.map((id) => id.toString()),
+      title: "Removed from Team",
+      message: `${req.user.FirstName} ${req.user.LastName} removed you from the team "${updatedTeam.name}"`,
+      data: { teamId: updatedTeam._id },
+    };
+    await sendNotification(notificationParams);
+
+    return res.json({
       success: true,
       updatedTeam,
     });
@@ -279,39 +320,60 @@ const removeMembers = async (req, res) => {
 const deleteTeam = async (req, res) => {
   try {
     const { teamId } = req.params;
+    const { Role, FirstName, LastName } = req.user;
 
-    const { Role } = req.user;
-
-    if (Role !== "TL")
+    //  Role check (expand as needed)
+    if (!["TL", "ADMIN"].includes(Role)) {
       return res.json({
-        message: "Only Team Lead can delete team",
+        message: "Only Team Lead or Admin can delete a team",
         success: false,
       });
+    }
 
-    if (!teamId)
+    if (!teamId) {
       return res.json({
         message: "teamId is required",
         success: false,
       });
+    }
 
     const deletedTeam = await teamModel.findByIdAndDelete(teamId);
 
-    if (deletedTeam) {
-      await Promise.all(
-        deletedTeam.members.map((memberId) => {
-          userModel.findByIdAndUpdate(memberId, {
-            $pull: { JoinedTeams: teamId },
-          });
-        })
-      );
+    if (!deletedTeam) {
+      return res.json({
+        message: "Team not found",
+        success: false,
+      });
     }
 
-    res.json({
+    //  Remove team reference from members
+    await Promise.all(
+      deletedTeam.members.map((memberId) =>
+        userModel.findByIdAndUpdate(memberId, {
+          $pull: { JoinedTeams: teamId },
+        })
+      )
+    );
+
+    //  Send notifications to all members
+    const notificationParams = {
+      recipient: deletedTeam.members.map((id) => id.toString()),
+      title: "Team Deleted",
+      message: `${FirstName} ${LastName} deleted the team "${deletedTeam.name}"`,
+      data: {
+        teamId: deletedTeam._id,
+      },
+    };
+
+    await sendNotification(notificationParams);
+
+    return res.json({
       success: true,
+      message: "Team deleted successfully",
       deletedTeam,
     });
   } catch (error) {
-    res.json({
+    return res.json({
       message: error.message,
       success: false,
     });

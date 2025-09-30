@@ -10,28 +10,39 @@ const checkIn = async (req, res) => {
     const { userId, status } = req.body;
     const today = new Date().toISOString().split("T")[0];
 
-    // check if user exists
+    //  Check if user exists
     const user = await userModel.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    // check if already checked in today
-    const existing = await Attendance.findOne({
-      user: userId,
-      date: today,
-    });
-
+    //  Check if already checked in today
+    const existing = await Attendance.findOne({ user: userId, date: today });
     if (existing) {
       return res.status(400).json({ message: "Already checked in today" });
     }
 
+    //  Create attendance record
     const record = new Attendance({
       user: userId,
       date: today,
       checkIn: new Date(),
       status,
     });
-
     await record.save();
+
+    // Notify ADMIN & HR about the check-in
+    // const adminHrUsers = await userModel.find(
+    //   { Role: { $in: ["ADMIN", "HR"] } },
+    //   "_id"
+    // );
+    // const recipientIds = adminHrUsers.map((u) => u._id);
+
+    await sendNotification({
+      recipients: userId.toString(),
+      title: `You Check-In at  ${new Date().toLocaleTimeString()}`,
+      message: `${user.FirstName} ${user.LastName} checked in for ${today} with status: ${status}.`,
+      data: { attendanceId: record._id, userId: user._id },
+    });
+
     res.json({ message: "Check-in successful", record });
   } catch (err) {
     res.status(500).json({ message: err.message });

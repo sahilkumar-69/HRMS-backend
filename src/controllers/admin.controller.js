@@ -1,7 +1,9 @@
 import { userModel } from "../models/User.model.js";
+import { sendNotification } from "../utils/sendNotification.js";
 
 export const givePolicyEditPermissionToHr = async (req, res) => {
-  const { Role } = req.user;
+  const { Role, FirstName, LastName } = req.user;
+
   if (Role !== "ADMIN") {
     return res.json({
       message: "Access denied",
@@ -12,9 +14,7 @@ export const givePolicyEditPermissionToHr = async (req, res) => {
   try {
     const hr = await userModel.findOneAndUpdate(
       { Role: "HR" },
-      {
-        $addToSet: { Permissions: "EDIT_POLICY" },
-      },
+      { $addToSet: { Permissions: "EDIT_POLICY" } },
       { new: true }
     );
 
@@ -24,6 +24,14 @@ export const givePolicyEditPermissionToHr = async (req, res) => {
         success: false,
       });
     }
+
+    // ✅ Notify the HR about the new permission
+    await sendNotification({
+      recipients: hr._id,
+      title: "Policy Edit Permission Granted",
+      message: `You have been granted permission to edit company policies by ${FirstName} ${LastName}.`,
+      data: { permission: "EDIT_POLICY" },
+    });
 
     return res.json({
       success: true,
@@ -40,7 +48,8 @@ export const givePolicyEditPermissionToHr = async (req, res) => {
 };
 
 export const removePolicyPermissionFromHr = async (req, res) => {
-  const { Role } = req.user;
+  const { Role, FirstName, LastName } = req.user;
+
   if (Role !== "ADMIN") {
     return res.json({
       message: "Access denied",
@@ -51,9 +60,7 @@ export const removePolicyPermissionFromHr = async (req, res) => {
   try {
     const hr = await userModel.findOneAndUpdate(
       { Role: "HR" },
-      {
-        $pull: { Permissions: "" },
-      },
+      { $pull: { Permissions: "EDIT_POLICY" } }, // ✅ corrected field value
       { new: true }
     );
 
@@ -63,6 +70,14 @@ export const removePolicyPermissionFromHr = async (req, res) => {
         success: false,
       });
     }
+
+    // ✅ Notify the HR about permission removal
+    await sendNotification({
+      recipients: hr._id,
+      title: "Policy Edit Permission Removed",
+      message: `Your permission to edit company policies has been revoked by ${FirstName} ${LastName}.`,
+      data: { permission: "EDIT_POLICY" },
+    });
 
     return res.json({
       success: true,

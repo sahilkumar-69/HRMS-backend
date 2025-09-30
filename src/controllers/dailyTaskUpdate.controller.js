@@ -4,13 +4,12 @@ import uploadOnCloudinary, {
   deleteFromCloudinary,
 } from "../utils/Cloudinary.js";
 
-// Create a new daily task update
+// Create a new daily task updateimport { sendNotification } from "../utils/sendNotification.js";
+
 export const addDailyUpdate = async (req, res) => {
   try {
     const { title, description } = req.body;
-    var uploadedFile;
-
-    // console.log("FILE", req?.file || req?.files || "no file");
+    let uploadedFile;
 
     if (req.file) {
       uploadedFile = await uploadOnCloudinary(
@@ -18,17 +17,13 @@ export const addDailyUpdate = async (req, res) => {
         "HRMS_DAILY_UPDATES"
       );
 
-      // console.log(uploadedFile);
-
       if (!uploadedFile.success) {
         return res.status(501).json({
           error: uploadedFile.message,
-          message: "File not upload, try again",
+          message: "File not uploaded, try again",
         });
       }
     }
-
-    // console.log("user", req.user);
 
     const newUpdate = await dailyUpdates.create({
       title,
@@ -41,8 +36,22 @@ export const addDailyUpdate = async (req, res) => {
     if (newUpdate._id) {
       newUpdate.employee = await userModel
         .findById(req.user._id)
-        .select("FirstName Role Department ");
+        .select("FirstName LastName Role Department");
     }
+
+    // ✅ Notify ADMIN & HR about the new daily update
+    const adminHrUsers = await userModel.find(
+      { Role: { $in: ["ADMIN", "HR"] } },
+      "_id"
+    );
+    const recipientIds = adminHrUsers.map((u) => u._id);
+
+    await sendNotification({
+      recipients: recipientIds,
+      title: "New Daily Update",
+      message: `${newUpdate.employee.FirstName} ${newUpdate.employee.LastName} posted a new daily update: "${title}".`,
+      data: { updateId: newUpdate._id },
+    });
 
     res.status(201).json({
       success: true,
@@ -50,8 +59,9 @@ export const addDailyUpdate = async (req, res) => {
       data: newUpdate,
     });
   } catch (error) {
-    if (uploadedFile?.response)
-      await deleteFromCloudinary(uploadedFile?.response?.public_id);
+    if (uploadedFile?.response) {
+      await deleteFromCloudinary(uploadedFile.response.public_id);
+    }
     res.status(500).json({ success: false, message: error.message });
   }
 };
