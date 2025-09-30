@@ -22,9 +22,7 @@ export const addAdministrationEntrie = async (req, res) => {
 
     return res.json(newEntry);
 
-    const newStore = new administration(req.body); // expects { accessories: [], services: [], miscellaneous: [] }
-    const savedStore = await newStore.save();
-    res.status(201).json(savedStore);
+  
   } catch (error) {
     res
       .status(500)

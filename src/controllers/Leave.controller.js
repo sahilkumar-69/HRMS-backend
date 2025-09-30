@@ -3,17 +3,11 @@ import Leave from "../models/leave.model.js";
 import { userModel } from "../models/User.model.js";
 import { daysBetween } from "../utils/calculateDays.js";
 import { isValidObjectId } from "mongoose";
-import { getIo } from "../utils/socketIO.js";
+import { sendNotification } from "../utils/sendNotification.js";
 
-// Employee applies for leave
 export const createLeave = async (req, res) => {
-  const io = getIo();
-
   try {
     const { leaveType, from, to, reason } = req.body;
-
-    // console.log(req.body);
-    // console.log(req.user);
 
     if (!leaveType || !from || !to || !reason) {
       return res
@@ -21,10 +15,10 @@ export const createLeave = async (req, res) => {
         .json({ success: false, message: "All fields required" });
     }
 
-    let days = daysBetween(from, to);
+    const days = daysBetween(from, to);
 
     const leave = await Leave.create({
-      employee: req.user._id, // taken from auth middleware
+      employee: req.user._id,
       leaveType,
       from,
       to,
@@ -35,18 +29,22 @@ export const createLeave = async (req, res) => {
 
     await userModel.findByIdAndUpdate(
       req.user._id,
-      {
-        $addToSet: { Leaves: leave._id },
-      },
-      {
-        new: true,
-      }
+      { $addToSet: { Leaves: leave._id } },
+      { new: true }
     );
 
-    io.to(["ADMIN", "HR"]).emit("leaveApplied", {
-      employeeName: `${req.user.FirstName} ${req.user.LastName}`,
-      leaveType,
-      leave,
+    //  Notify Admin & HR
+    const recipients = await userModel.find(
+      { Role: { $in: ["ADMIN", "HR"] } },
+      "_id"
+    );
+    const recipientIds = recipients.map((u) => u._id.toString());
+
+    await sendNotification({
+      recipients: recipientIds,
+      title: "New Leave Request",
+      message: `${req.user.FirstName} ${req.user.LastName} applied for ${leaveType} leave.`,
+      data: { leaveId: leave._id },
     });
 
     return res.status(201).json({
@@ -58,6 +56,7 @@ export const createLeave = async (req, res) => {
     return res.status(500).json({ success: false, message: err.message });
   }
 };
+
 // HR/Admin fetches all leave requests
 export const getAllLeaves = async (req, res) => {
   try {
@@ -106,7 +105,6 @@ export const getUserLeaves = async (req, res) => {
 
 export const cancelRequest = async (req, res) => {
   const { id } = req.params;
-  const io = getIo();
 
   if (!isValidObjectId(id)) {
     return res.json({
@@ -114,8 +112,12 @@ export const cancelRequest = async (req, res) => {
       success: false,
     });
   }
+
   try {
-    const leave = await Leave.findOneAndDelete({ _id: id });
+    const leave = await Leave.findOneAndDelete({ _id: id }).populate(
+      "employee",
+      "FirstName LastName"
+    );
 
     if (!leave) {
       return res.json({
@@ -125,32 +127,39 @@ export const cancelRequest = async (req, res) => {
     }
 
     await userModel.findOneAndUpdate(
-      { _id: leave.employee },
-      {
-        $pull: {
-          Leaves: leave._id,
-        },
-      },
-      {
-        new: true,
-      }
+      { _id: leave.employee._id },
+      { $pull: { Leaves: leave._id } },
+      { new: true }
     );
+
+    //  Notify ADMIN & HR that a leave was cancelled
+    const recipients = await userModel.find(
+      { Role: { $in: ["ADMIN", "HR"] } },
+      "_id"
+    );
+    const recipientIds = recipients.map((u) => u._id.toString());
+
+    await sendNotification({
+      recipients: recipientIds,
+      title: "Leave Request Cancelled",
+      message: `${leave.employee.FirstName} ${leave.employee.LastName} cancelled their ${leave.leaveType} leave request.`,
+      data: { leaveId: leave._id },
+    });
 
     return res.json({
       message: "Leave cancelled successfully",
       success: true,
     });
   } catch (error) {
-    res.json({
+    return res.json({
       message: error.message,
       success: false,
     });
   }
 };
 // ADMIN updates leave status (approve/reject)
-export const updateLeaveStatus = async (req, res) => {
-  const io = getIo();
 
+export const updateLeaveStatus = async (req, res) => {
   try {
     const { leaveId } = req.params;
     const { status } = req.body;
@@ -161,7 +170,7 @@ export const updateLeaveStatus = async (req, res) => {
         .json({ success: false, message: "Invalid status" });
     }
 
-    const { Role, FirstName, LastName } = req.user;
+    const { Role, FirstName, LastName, _id: adminId } = req.user;
 
     if (Role !== "ADMIN") {
       return res.json({
@@ -172,7 +181,7 @@ export const updateLeaveStatus = async (req, res) => {
 
     const leave = await Leave.findByIdAndUpdate(
       leaveId,
-      { status, updatedBy: req.user._id },
+      { status, updatedBy: adminId },
       { new: true }
     ).populate("employee", "FirstName LastName Email");
 
@@ -182,18 +191,24 @@ export const updateLeaveStatus = async (req, res) => {
         .json({ success: false, message: "Leave not found" });
     }
 
-    // Notify the employee
-    io.to(leave.employee._id.toString()).emit("leaveUpdate", {
-      leaveId: leave._id,
-      status: leave.status,
-      message: `Your leave request has been ${leave.status} by ${FirstName} ${LastName}`,
+    //  Notify the employee about status change
+    await sendNotification({
+      recipients: leave.employee._id,
+      title: "Leave Status Updated",
+      message: `Your leave request has been ${status} by ${FirstName} ${LastName}.`,
+      data: { leaveId: leave._id },
     });
 
-    // Notify HRs
-    io.to("HR").emit("leaveUpdate", {
-      leaveId: leave._id,
-      status: leave.status,
-      message: `${FirstName} ${LastName} has ${leave.status} ${leave.employee.FirstName} ${leave.employee.LastName}'s leave request`,
+    //  Notify all HRs about the update
+    const hrUsers = await userModel.find({ Role: "HR" }, "_id");
+
+    const hrIds = hrUsers.map((u) => u._id.toString());
+
+    await sendNotification({
+      recipients: hrIds,
+      title: "Leave Status Updated",
+      message: `${FirstName} ${LastName} has ${status} ${leave.employee.FirstName} ${leave.employee.LastName}'s leave request.`,
+      data: { leaveId: leave._id },
     });
 
     return res.json({ success: true, message: "Leave updated", leave });

@@ -3,19 +3,17 @@ import { policies } from "../models/policy.model.js";
 import uploadOnCloudinary, {
   deleteFromCloudinary,
 } from "../utils/Cloudinary.js";
-import { getIo } from "../utils/socketIO.js";
 
 const addPolicy = async (req, res) => {
-  const io = getIo();
+  const { Role, FirstName, LastName, _id: adminId } = req.user;
 
-  const { Role } = req.user;
   let docs = {
     public_id: "",
     secure_url: "",
   };
 
   try {
-    //  Role-based access control
+    //  Role-based access
     if (Role !== "ADMIN") {
       return res.status(403).json({
         success: false,
@@ -23,34 +21,40 @@ const addPolicy = async (req, res) => {
       });
     }
 
-    //  Upload file if provided
+    //  Upload policy file
     if (req.file) {
       const uploads = await uploadOnCloudinary(req.file.path, "HRMS_POLICIES");
-
       if (!uploads.success) {
         return res.status(400).json({
           success: false,
           message: uploads.message || "File upload failed",
         });
       }
-
       docs.public_id = uploads.response.public_id;
       docs.secure_url = uploads.response.secure_url;
     } else {
       return res.status(404).json({
         success: false,
-        message: "File upload failed from user",
+        message: "No policy file provided",
       });
     }
-
-    //  Optional: restrict to one active policy at a time
-    // await policies.deleteMany({}); // uncomment if you want only one
 
     //  Save to DB
     const policy = await policies.create(docs);
 
-    io.emit("policyAdded", {
-      policy,
+    // Notify all HR & employees
+    const allUsers = await User.find({}, "_id");
+    const recipientIds = allUsers.map((u) => u._id.toString());
+
+    await sendNotification({
+      recipients: recipientIds,
+      title: "New Company Policy",
+      message: `A new company policy has been added by ${FirstName} ${LastName}. Please review the latest document.`,
+      data: {
+        policyId: policy._id,
+        secure_url: docs.secure_url,
+        uploadedBy: adminId,
+      },
     });
 
     return res.status(201).json({
@@ -59,11 +63,10 @@ const addPolicy = async (req, res) => {
       policy,
     });
   } catch (error) {
-    // Cleanup uploaded file if DB save fails
+    // Cleanup Cloudinary file if DB save fails
     if (docs.public_id) {
       await deleteFromCloudinary(docs.public_id);
     }
-
     return res.status(500).json({
       success: false,
       message: "Server error while adding policy",
@@ -72,8 +75,8 @@ const addPolicy = async (req, res) => {
   }
 };
 
-const updatePolicy = async (req, res) => {
-  const io = getIo();
+export const updatePolicy = async (req, res) => {
+  const { Role, FirstName, LastName, _id: adminId } = req.user;
 
   let docs = {
     public_id: "",
@@ -81,55 +84,73 @@ const updatePolicy = async (req, res) => {
   };
 
   try {
-    // Upload new file if provided
+    //  Role-based access
+    if (Role !== "ADMIN") {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied. Only admins can update policies.",
+      });
+    }
+
+    //  Upload new file if provided
     if (req.file) {
       const uploads = await uploadOnCloudinary(req.file.path, "HRMS_POLICIES");
-
       if (!uploads.success) {
-        return res.json({ success: false, message: uploads.message });
+        return res
+          .status(400)
+          .json({ success: false, message: uploads.message });
       }
-
       docs.public_id = uploads.response.public_id;
       docs.secure_url = uploads.response.secure_url;
     }
 
-    // Find the existing policy (assuming only one policy exists in DB)
+    //  Find existing policy
     let policy = await policies.findOne();
 
     if (policy) {
-      // Delete old file from cloudinary if exists
-      if (policy.public_id) {
+      // Delete old file if new file uploaded
+      if (docs.public_id && policy.public_id) {
         await deleteFromCloudinary(policy.public_id);
       }
 
-      // Update policy fields
-      policy.public_id = docs.public_id;
-      policy.secure_url = docs.secure_url;
+      if (docs.public_id) policy.public_id = docs.public_id;
+      if (docs.secure_url) policy.secure_url = docs.secure_url;
 
       await policy.save();
     } else {
-      // If no policy exists, create new
+      // Create new if none exists
       policy = await policies.create(docs);
     }
 
-    io.emit("policyUpdated", {
-      policy,
+    //  Send notification to all users
+    const allUsers = await User.find({}, "_id");
+    const recipientIds = allUsers.map((u) => u._id.toString());
+
+    await sendNotification({
+      recipients: recipientIds,
+      title: "Company Policy Updated",
+      message: `The company policy has been updated by ${FirstName} ${LastName}. Please review the latest version.`,
+      data: {
+        policyId: policy._id,
+        secure_url: policy.secure_url,
+        updatedBy: adminId,
+      },
     });
 
     return res.json({
-      message: "Policy updated successfully",
       success: true,
+      message: "Policy updated successfully",
       policy,
     });
   } catch (error) {
-    // Rollback: delete newly uploaded file if DB operation fails
+    // Rollback if DB fails
     if (docs.public_id) {
       await deleteFromCloudinary(docs.public_id);
     }
-
-    return res.json({
-      message: error.message,
+    return res.status(500).json({
       success: false,
+      message: "Error updating policy",
+      error: error.message,
     });
   }
 };
@@ -160,13 +181,11 @@ const getPolicy = async (req, res) => {
 };
 
 const deletePolicy = async (req, res) => {
-  const io = getIo();
-
-  const { Role } = req.user;
+  const { Role, FirstName, LastName, _id: adminId } = req.user;
   const { id } = req.params;
 
   try {
-    //  Check role
+    //  Role check
     if (Role !== "ADMIN") {
       return res.status(403).json({
         success: false,
@@ -174,7 +193,7 @@ const deletePolicy = async (req, res) => {
       });
     }
 
-    //   Find policy
+    //  Find policy
     const policy = await policies.findById(id);
     if (!policy) {
       return res.status(404).json({
@@ -183,16 +202,26 @@ const deletePolicy = async (req, res) => {
       });
     }
 
-    //   Delete file from Cloudinary if exists
+    //  Delete file from Cloudinary if exists
     if (policy.public_id) {
       await deleteFromCloudinary(policy.public_id);
     }
 
-    //   Delete from DB
+    //  Delete from DB
     await policy.deleteOne();
 
-    io.emit("policyDeleted", {
-      policy,
+    // 🔔 Notify all users about deletion
+    const allUsers = await User.find({}, "_id");
+    const recipientIds = allUsers.map((u) => u._id.toString());
+
+    await sendNotification({
+      recipients: recipientIds,
+      title: "Company Policy Removed",
+      message: `An old company policy has been deleted by ${FirstName} ${LastName}.`,
+      data: {
+        deletedPolicyId: id,
+        deletedBy: adminId,
+      },
     });
 
     return res.status(200).json({

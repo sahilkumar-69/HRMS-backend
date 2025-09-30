@@ -1,17 +1,18 @@
 import { expense } from "../models/expense.model.js";
 import { isValidObjectId } from "mongoose";
-import { getIo } from "../utils/socketIO.js";
+import { sendNotification } from "../utils/sendNotification.js";
 
 // CREATE a new expense
 export const createExpense = async (req, res) => {
-  const io = getIo();
-
   try {
     const { title, description, amount } = req.body;
+    const { Role, FirstName, LastName, _id: hrId } = req.user;
 
-    const { Role, FirstName, LastName } = req.user;
-
-    if (!title.toString().trim() || !description.toString().trim() || !amount) {
+    if (
+      !title?.toString().trim() ||
+      !description?.toString().trim() ||
+      !amount
+    ) {
       return res.status(400).json({
         success: false,
         message: "All fields are required",
@@ -29,17 +30,18 @@ export const createExpense = async (req, res) => {
       title,
       description,
       amount,
-      createdBy: req.user._id,
+      createdBy: hrId,
     });
 
-    // Emit to ADMIN room
-    io.to("ADMIN").emit("expenseCreated", {
-      expenseId: newExpense._id,
-      title: newExpense.title,
-      amount: newExpense.amount,
-      createdBy: `${FirstName} ${LastName}`,
-      createdAt: newExpense.createdAt,
-      message: `New expense created by ${FirstName} ${LastName}`,
+    //  Notify all ADMIN users
+    const adminUsers = await userModel.find({ Role: "ADMIN" }, "_id");
+    const adminIds = adminUsers.map((u) => u._id);
+
+    await sendNotification({
+      recipients: adminIds,
+      title: "New Expense Created",
+      message: `A new expense "${title}" of amount ${amount} was created by ${FirstName} ${LastName}.`,
+      data: { expenseId: newExpense._id },
     });
 
     return res.status(201).json({
@@ -56,12 +58,9 @@ export const createExpense = async (req, res) => {
 };
 
 export const updateExpense = async (req, res) => {
-  const io = getIo();
-
   const { id } = req.params;
   const { title, description, amount } = req.body;
-
-  const { Role, FirstName, LastName } = req.user;
+  const { Role, FirstName, LastName, _id: hrId } = req.user;
 
   if (!isValidObjectId(id)) {
     return res
@@ -71,41 +70,48 @@ export const updateExpense = async (req, res) => {
 
   if (Role !== "HR") {
     return res.json({
-      message: "Only HR can add expenses",
+      message: "Only HR can update expenses",
       success: false,
     });
   }
 
   try {
     const exp = await expense.findById(id);
-    if (!exp)
+    if (!exp) {
       return res
         .status(404)
         .json({ success: false, message: "Expense not found" });
-
-    // Only creator can update
-    if (!exp.createdBy.equals(req.user._id)) {
-      return res.status(403).json({ success: false, message: "Not allowed" });
     }
 
+    //  Ensure only creator can update
+    if (!exp.createdBy.equals(hrId)) {
+      return res.status(403).json({
+        success: false,
+        message: "Not allowed to update this expense",
+      });
+    }
+
+    //  Update fields
     exp.title = title || exp.title;
     exp.description = description || exp.description;
     exp.amount = amount || exp.amount;
 
     const updatedExpense = await exp.save();
 
-    io.to("ADMIN").emit("expenseUpdated", {
-      expenseId: updatedExpense._id,
-      title: updatedExpense.title,
-      amount: updatedExpense.amount,
-      updatedBy: `${req.user.FirstName} ${req.user.LastName}`,
-      updatedAt: updatedExpense.updatedAt,
-      message: `Expense updated by ${req.user.FirstName} ${req.user.LastName}`,
+    // 🔔 Notify all ADMIN users
+    const adminUsers = await userModel.find({ Role: "ADMIN" }, "_id");
+    const adminIds = adminUsers.map((u) => u._id);
+
+    await sendNotification({
+      recipients: adminIds,
+      title: "Expense Updated",
+      message: `Expense "${updatedExpense.title}" was updated by ${FirstName} ${LastName}.`,
+      data: { expenseId: updatedExpense._id },
     });
 
     return res.json({
       success: true,
-      message: "Expense updated",
+      message: "Expense updated successfully",
       expense: updatedExpense,
     });
   } catch (error) {
@@ -114,46 +120,62 @@ export const updateExpense = async (req, res) => {
 };
 
 export const deleteExpense = async (req, res) => {
-  const io = getIo();
   const { id } = req.params;
-  const { Role, FirstName, LastName } = req.user;
+  const { Role, FirstName, LastName, _id: hrId } = req.user;
 
   if (!isValidObjectId(id)) {
-    return res
-      .status(400)
-      .json({ success: false, message: "Invalid expense ID" });
+    return res.status(400).json({
+      success: false,
+      message: "Invalid expense ID",
+    });
   }
 
   if (Role !== "HR") {
     return res.json({
-      message: "Only HR can add expenses",
       success: false,
+      message: "Only HR can delete expenses",
     });
   }
 
   try {
     const exp = await expense.findById(id);
-    if (!exp)
-      return res
-        .status(404)
-        .json({ success: false, message: "Expense not found" });
+    if (!exp) {
+      return res.status(404).json({
+        success: false,
+        message: "Expense not found",
+      });
+    }
 
-    // Only creator can delete
-    if (!exp.createdBy.equals(req.user._id)) {
-      return res.status(403).json({ success: false, message: "Not allowed" });
+    //  Only the creator can delete
+    if (!exp.createdBy.equals(hrId)) {
+      return res.status(403).json({
+        success: false,
+        message: "Not allowed to delete this expense",
+      });
     }
 
     await expense.findByIdAndDelete(id);
 
-    io.to("ADMIN").emit("expenseDeleted", {
-      expenseId: id,
-      deletedBy: `${FirstName} ${LastName}`,
-      message: `Expense deleted by ${FirstName} ${LastName}`,
+    //  Notify all ADMIN users
+    const adminUsers = await userModel.find({ Role: "ADMIN" }, "_id");
+    const adminIds = adminUsers.map((u) => u._id);
+
+    await sendNotification({
+      recipients: adminIds,
+      title: "Expense Deleted",
+      message: `Expense "${exp.title}" was deleted by ${FirstName} ${LastName}.`,
+      data: { expenseId: id },
     });
 
-    return res.json({ success: true, message: "Expense deleted successfully" });
+    return res.json({
+      success: true,
+      message: "Expense deleted successfully",
+    });
   } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 
@@ -193,7 +215,6 @@ export const getExpenseById = async (req, res) => {
 };
 
 export const getExpenses = async (req, res) => {
-  
   const { Role } = req.user;
 
   if (Role !== "HR" && Role !== "ADMIN") {
