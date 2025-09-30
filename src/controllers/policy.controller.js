@@ -1,5 +1,6 @@
-import { response } from "express";
+// import { response } from "express";
 import { policies } from "../models/policy.model.js";
+import { userModel } from "../models/User.model.js";
 import uploadOnCloudinary, {
   deleteFromCloudinary,
 } from "../utils/Cloudinary.js";
@@ -43,7 +44,7 @@ const addPolicy = async (req, res) => {
     const policy = await policies.create(docs);
 
     // Notify all HR & employees
-    const allUsers = await User.find({}, "_id");
+    const allUsers = await userModel.find({}, "_id");
     const recipientIds = allUsers.map((u) => u._id.toString());
 
     await sendNotification({
@@ -75,7 +76,7 @@ const addPolicy = async (req, res) => {
   }
 };
 
-export const updatePolicy = async (req, res) => {
+ const updatePolicy = async (req, res) => {
   const { Role, FirstName, LastName, _id: adminId } = req.user;
 
   let docs = {
@@ -123,7 +124,7 @@ export const updatePolicy = async (req, res) => {
     }
 
     //  Send notification to all users
-    const allUsers = await User.find({}, "_id");
+    const allUsers = await userModel.find({}, "_id");
     const recipientIds = allUsers.map((u) => u._id.toString());
 
     await sendNotification({
@@ -211,7 +212,7 @@ const deletePolicy = async (req, res) => {
     await policy.deleteOne();
 
     // 🔔 Notify all users about deletion
-    const allUsers = await User.find({}, "_id");
+    const allUsers = await userModel.find({}, "_id");
     const recipientIds = allUsers.map((u) => u._id.toString());
 
     await sendNotification({

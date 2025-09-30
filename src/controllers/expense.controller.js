@@ -1,6 +1,7 @@
 import { expense } from "../models/expense.model.js";
 import { isValidObjectId } from "mongoose";
 import { sendNotification } from "../utils/sendNotification.js";
+import { userModel } from "../models/User.model.js";
 
 // CREATE a new expense
 export const createExpense = async (req, res) => {
