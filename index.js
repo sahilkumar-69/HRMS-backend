@@ -28,11 +28,12 @@ const server = createServer(app);
 
 initiateServer(server);
 
-// const allowedOrigins = [
-//   "http://localhost:5173",
-//   "http://localhost:5174",
-//   "http://localhost:5175",
-// ];
+const allowedOrigins = [
+  "https://devnexus-hrms.vercel.app",
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "http://localhost:5175",
+];
 
 // app.use(
 //   cors({
@@ -49,7 +50,17 @@ initiateServer(server);
 
 app.use(
   cors({
-    origin: "https://devnexus-hrms.vercel.app",
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like Postman or curl)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      } else {
+        return callback(new Error("Not allowed by CORS"));
+      }
+    },
+
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
