@@ -28,12 +28,33 @@ const server = createServer(app);
 
 initiateServer(server);
 
+// const allowedOrigins = [
+//   "http://localhost:5173",
+//   "http://localhost:5174",
+//   "http://localhost:5175",
+// ];
 
-const allowedOrigins = [
-  "http://localhost:5173",
-  "http://localhost:5174",
-  "http://localhost:5175",
-];
+// app.use(
+//   cors({
+//     origin: (origin, callback) => {
+//       if (!origin || allowedOrigins.includes(origin)) {
+//         callback(null, true);
+//       } else {
+//         callback(new Error("Not allowed by CORS"));
+//       }
+//     },
+//     credentials: true, // if you are sending cookies/JWT in headers
+//   })
+// );
+
+app.use(
+  cors({
+    origin: "https://devnexus-hrms.vercel.app",
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+  })
+);
 
 app.set("view engine", "ejs");
 
@@ -44,19 +65,6 @@ app.use(express.json());
 app.use(bodyParser.json());
 
 app.use(express.urlencoded({ extended: true, limit: "15mb" }));
-
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    credentials: true, // if you are sending cookies/JWT in headers
-  })
-);
 
 app.get("/", (req, res) => {
   res.send("Server is live");
