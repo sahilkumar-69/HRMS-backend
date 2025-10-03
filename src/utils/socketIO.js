@@ -1,5 +1,6 @@
 import { Server } from "socket.io";
 import { Notification } from "../models/notification.model.js";
+import { userModel } from "../models/User.model.js";
 
 export let io;
 
@@ -14,6 +15,13 @@ export const initiateServer = (server) => {
     console.log("connected to socket", socket.id);
 
     socket.on("register", async ({ userId, Role }) => {
+      const alreadyOnline = onlineUsers.has(userId);
+
+      const userDetail = await userModel
+        .findById(userId)
+        .select("FirstName LastName");
+
+      // Track the socket for this user
       onlineUsers.set(userId, socket.id);
       socket.userId = userId;
       socket.join(userId);
@@ -21,13 +29,15 @@ export const initiateServer = (server) => {
 
       console.log(`User ${userId} registered with ${socket.id}`);
 
-      //  Notify all clients this user is online
-      io.emit("userOnline", { userId });
+      // Only notify others if this is a *new online user*
+      if (!alreadyOnline) {
+        io.emit("userOnline", { userId, userDetail });
+      }
 
-      // Send pending (unread) notifications
+      // Send pending (unread) notifications only to this socket
       const pending = await Notification.find({
         recipient: userId,
-        isRead: false,
+        // isRead: false,
       }).sort({ createdAt: -1 });
 
       if (pending.length > 0) {

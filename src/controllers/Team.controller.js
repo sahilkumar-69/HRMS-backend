@@ -24,7 +24,7 @@ const createTeam = async (req, res) => {
     await team.save();
 
     // Update each member's JoinedTeams
-    const teamMembers = await userModel.find({ _id: { $in: members } });
+    const teamMembers = await userModel.find({ _id: { $in: members } });  
     await Promise.all(
       teamMembers.map(async (member) => {
         member.JoinedTeams.push(team._id);

@@ -1,5 +1,4 @@
 import { userModel } from "../models/User.model.js";
-// import fs from "fs";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import Otp from "../models/otp.model.js";
@@ -11,6 +10,7 @@ import { isUserExists } from "../utils/IsUserExists.js";
 import { generateToken } from "../utils/generateToken.js";
 import { hashOTP } from "../utils/otp.js";
 import { sendMail } from "../utils/nodemailer.js";
+import { sendNotification } from "../utils/sendNotification.js";
 
 const userLogin = async (req, res) => {
   try {
@@ -30,23 +30,26 @@ const userLogin = async (req, res) => {
       });
     }
 
-    const isExists = await userModel.findOne({ Email }).populate({
-      path: "Tasks",
-      select:
-        "title description priority startDate dueDate assignee assigner status",
-      populate: [
-        { path: "assignee", select: "FirstName LastName Email Role" },
-        { path: "assigner", select: "FirstName LastName Email Role" },
-      ],
-    }).populate({
-       path: "Tasks",
-      select:
-        "title description priority startDate dueDate assignee assigner status",
-      populate: [
-        { path: "assignee", select: "FirstName LastName Email Role" },
-        { path: "assigner", select: "FirstName LastName Email Role" },
-      ],
-    })
+    const isExists = await userModel
+      .findOne({ Email })
+      .populate({
+        path: "Tasks",
+        select:
+          "title description priority startDate dueDate assignee assigner status",
+        populate: [
+          { path: "assignee", select: "FirstName LastName Email Role" },
+          { path: "assigner", select: "FirstName LastName Email Role" },
+        ],
+      })
+      .populate({
+        path: "Tasks",
+        select:
+          "title description priority startDate dueDate assignee assigner status",
+        populate: [
+          { path: "assignee", select: "FirstName LastName Email Role" },
+          { path: "assigner", select: "FirstName LastName Email Role" },
+        ],
+      });
     //
 
     if (!isExists) {
@@ -163,7 +166,7 @@ const userSignUp = async (req, res) => {
         message: "Profile Photo is not uploaded (file path missing)",
       });
     }
-    const fileStr = req.file?.path;
+    const fileStr = req?.file?.path;
 
     var cloudRes = await uploadOnCloudinary(fileStr);
 
@@ -206,6 +209,17 @@ const userSignUp = async (req, res) => {
         message: "Can't save to db",
       });
     }
+
+    const recipientIds = await userModel.find({ Role: "HR" }).select("_id");
+
+    const notificationParams = {
+      recipients: recipientIds.map((id) => id.toString()),
+      title: "New Employee joined",
+      message: `New Employee named ${savedUser.FirstName} ${savedUser.LastName} joined as ${savedUser.Role}`,
+      data: "",
+    };
+
+    await sendNotification(notificationParams);
 
     res.status(201).json({
       success: true,
