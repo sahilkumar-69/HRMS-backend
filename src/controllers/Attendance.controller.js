@@ -2,50 +2,63 @@
 import { Types } from "mongoose";
 import Attendance from "../models/Attendance.model.js";
 import { userModel } from "../models/User.model.js";
+import { sendNotification } from "../utils/sendNotification.js";
 // import AttendanceModel from "../models/Attendance.model.js";
 
 // Check-in
 const checkIn = async (req, res) => {
   try {
-    const { userId, status } = req.body;
-    const today = new Date().toISOString().split("T")[0];
+    const { userId, date, time, status } = req.body;
+
+    // If date and time not provided, use current date & time
+    const now = new Date();
+    const today = date || now.toISOString().split("T")[0];
+    const checkInTime = time || now.toTimeString().slice(0, 5); // "HH:MM"
 
     //  Check if user exists
     const user = await userModel.findById(userId);
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
 
     //  Check if already checked in today
     const existing = await Attendance.findOne({ user: userId, date: today });
     if (existing) {
-      return res.status(400).json({ message: "Already checked in today" });
+      return res
+        .status(200)
+        .json({ success: false, message: "Already checked in today" });
     }
 
     //  Create attendance record
     const record = new Attendance({
       user: userId,
-      date: today,
-      checkIn: new Date(),
+      date: today, // YYYY-MM-DD
+      checkIn: now, // Full Date object (for exact timestamp)
+      checkInDate: today, // string (YYYY-MM-DD)
+      checkInTime: checkInTime, // string (HH:MM)
       status,
     });
+
     await record.save();
 
-    // Notify ADMIN & HR about the check-in
-    // const adminHrUsers = await userModel.find(
-    //   { Role: { $in: ["ADMIN", "HR"] } },
-    //   "_id"
-    // );
-    // const recipientIds = adminHrUsers.map((u) => u._id);
-
+    //  Notify user
     await sendNotification({
       recipients: userId.toString(),
-      title: `You Check-In at  ${new Date().toLocaleTimeString()}`,
-      message: `${user.FirstName} ${user.LastName} checked in for ${today} with status: ${status}.`,
+      title: `You Checked-In at ${checkInTime}`,
+      message: `${user.FirstName} ${user.LastName} checked in on ${today} with status: ${status}.`,
       data: { attendanceId: record._id, userId: user._id },
     });
 
-    res.json({ message: "Check-in successful", record });
+    res.status(201).json({
+      success: true,
+      message: "Check-in successful",
+      record,
+    });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("Check-in error:", err);
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 
@@ -73,18 +86,18 @@ const getAttendance = async (req, res) => {
   try {
     const { userId } = req.params;
     const records = await Attendance.find({ user: userId })
-      .populate("user", "name email role")
+      .populate("user", "FirstName LastName Email Role")
       .sort({ date: -1 });
 
-    res.json(records);
+    res.json({ success: true, count: records.length, records });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 
 const updateAttendance = async (req, res) => {
   try {
-    const { userId, date, status } = req.body;
+    const { userId, date, time, status } = req.body;
 
     if (!userId || !Types.ObjectId.isValid(userId)) {
       return res.status(400).json({

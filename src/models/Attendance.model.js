@@ -5,6 +5,8 @@ const attendanceSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: "users", required: true },
   date: { type: Date, required: true },
   checkIn: { type: Date },
+  checkInDate: { type: String },
+  checkInTime: { type: String },
   checkOut: { type: Date },
   status: {
     type: String,

@@ -39,9 +39,8 @@ export const getMyNotifications = async (req, res) => {
   try {
     const notifications = await Notification.find({
       recipient: req.user._id,
-    })
-      .sort({ createdAt: -1 })
-      .populate("sender", "FirstName LastName Email Role");
+    }).sort({ createdAt: -1 });
+    // .populate("sender", "FirstName LastName Email Role");
 
     return res.json({
       success: true,
@@ -87,6 +86,37 @@ export const markAsRead = async (req, res) => {
       message: "Error updating notification",
       error: error.message,
     });
+  }
+};
+
+export const markAllAsRead = async (req, res) => {
+  try {
+    const { ids } = req.body;
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ message: "No notification IDs provided" });
+    }
+
+    // Mark all given notifications as read
+    const result = await Notification.updateMany(
+      { _id: { $in: ids } },
+      { $set: { isRead: true } }
+    );
+
+    const allNotifications = await Notification.find().sort({
+      createdAt: -1,
+    });
+
+    return res.status(200).json({
+      message: "Notifications marked as read",
+      modifiedCount: result.modifiedCount,
+      notifications: allNotifications,
+    });
+  } catch (error) {
+    console.error("Error marking notifications as read:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Internal Server Error" });
   }
 };
 
