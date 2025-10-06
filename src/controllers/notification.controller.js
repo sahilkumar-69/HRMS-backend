@@ -93,6 +93,8 @@ export const markAllAsRead = async (req, res) => {
   try {
     const { ids } = req.body;
 
+    const { _id } = req.user;
+
     if (!Array.isArray(ids) || ids.length === 0) {
       return res.status(400).json({ message: "No notification IDs provided" });
     }
@@ -103,7 +105,9 @@ export const markAllAsRead = async (req, res) => {
       { $set: { isRead: true } }
     );
 
-    const allNotifications = await Notification.find().sort({
+    const allNotifications = await Notification.find({
+      recipient: _id,
+    }).sort({
       createdAt: -1,
     });
 
