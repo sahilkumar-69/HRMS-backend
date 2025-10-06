@@ -37,7 +37,7 @@ export const initiateServer = (server) => {
       // Send pending (unread) notifications only to this socket
       const pending = await Notification.find({
         recipient: userId,
-        // isRead: false,
+        isRead: false,
       }).sort({ createdAt: -1 });
 
       if (pending.length > 0) {

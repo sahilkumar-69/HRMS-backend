@@ -3,13 +3,14 @@ import { userModel } from "../models/User.model.js";
 import uploadOnCloudinary, {
   deleteFromCloudinary,
 } from "../utils/Cloudinary.js";
+import { sendNotification } from "../utils/sendNotification.js";
 
 // Create a new daily task updateimport { sendNotification } from "../utils/sendNotification.js";
 
 export const addDailyUpdate = async (req, res) => {
+  let uploadedFile;
   try {
     const { title, description } = req.body;
-    let uploadedFile;
 
     if (req.file) {
       uploadedFile = await uploadOnCloudinary(
