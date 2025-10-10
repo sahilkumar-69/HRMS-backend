@@ -5,8 +5,8 @@ export function payslipHTML(data) {
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Payslip - ${data._doc.FirstName}_${data._doc.LastName}_${
-    data.month
+    <title>Payslip - ${data?._doc.FirstName}_${data?._doc.LastName}_${
+    data?.month
   }</title>
     <style>
       body {
@@ -288,7 +288,7 @@ export function payslipHTML(data) {
         overflow: hidden;
         margin: 25px 30px 10px;
         box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
-        background: linear-gradient(to right, #ffffff 82%, #eaf7ee 82%);
+        background: linear-gradient(to right, #ffffff 80%, #eaf7ee 80%);
         font-family: 'Segoe UI', Arial, sans-serif;
       }
 
@@ -383,34 +383,34 @@ export function payslipHTML(data) {
               <tr>
                 <td>Employee Name</td>
                 <td>:</td>
-                <td>${data._doc.FirstName} ${data._doc.LastName}</td>
+                <td>${data?._doc.FirstName} ${data?._doc.LastName}</td>
               </tr>
               <tr>
                 <td>Employee ID</td>
                 <td>:</td>
-                <td>${data._doc.EmployeeId}</td>
+                <td>${data?._doc.EmployeeId}</td>
               </tr>
               <tr>
                 <td>Pay Period</td>
                 <td>:</td>
-                <td>${data.MONTH}</td>
+                <td>${data?.MONTH}</td>
               </tr>
               <tr>
                 <td>Pay Date</td>
                 <td>:</td>
-                <td>${data.payDate.split("T")[0]}</td>
+                <td>${data?.payDate.split("T")[0]}</td>
               </tr>
             </table>
           </div>
 
           <div class="pay-summary">
             <div class="pay-summary-header">
-              <h4>Rs.${data.netPay}</h4>
+              <h4>Rs.${data?.netPay}</h4>
               <div class="amount">Total Net Pay</div>
             </div>
             <table>
               <tr>
-                <td><strong>Paid Days</strong>:${data.paidDays}</td>
+                <td><strong>Paid Days</strong>:${data?.paidDays}</td>
                 <td></td>
               </tr>
               <tr>
@@ -431,39 +431,39 @@ export function payslipHTML(data) {
             <tr>
               <td>Designation</td>
               <td>:</td>
-              <td>${data._doc.Role}</td>
+              <td>${data?._doc.Role}</td>
               <td>Department</td>
               <td>:</td>
-              <td>${data._doc.Department}</td>
+              <td>${data?._doc.Department}</td>
             </tr>
             <tr>
               <td>Pan No</td>
               <td>:</td>
-              <td>${data.PANCardNumber}</td>
+              <td>${data?.PANCardNumber}</td>
               <td>Aadhaar No</td>
               <td>:</td>
-              <td>${data.AadharCardNumber}</td>
+              <td>${data?.AadharCardNumber}</td>
             </tr>
             <tr>
               <td>Bank Name</td>
               <td>:</td>
-              <td>${data._doc.BankDetails?.BankName}</td>
+              <td>${data?._doc.BankDetails?.BankName}</td>
               <td>Account Holder Name</td>
               <td>:</td>
-              <td>${data._doc.FirstName} ${data._doc.LastName}</td>
+              <td>${data?._doc.FirstName} ${data?._doc.LastName}</td>
             </tr>
             <tr>
               <td>Account Number</td>
               <td>:</td>
-              <td>${data._doc.BankDetails?.AccountNumber}</td>
+              <td>${data?._doc.BankDetails?.AccountNumber}</td>
               <td>IFSC Code</td>
               <td>:</td>
-              <td>${data._doc.BankDetails?.IFSC}</td>
+              <td>${data?._doc.BankDetails?.IFSC}</td>
             </tr>
             <tr>
               <td>Gross Salary</td>
               <td>:</td>
-              <td>${data.gross}</td>
+              <td>${data?.gross}</td>
             </tr>
           </table>
         </div>
@@ -479,25 +479,25 @@ export function payslipHTML(data) {
             </tr>
             <tr>
               <td>Basic</td>
-              <td>${data.basic}</td>
+              <td>${data?.basic}</td>
               <td>Income Tax</td>
-              <td>${data.tax}</td>
+              <td>${data?.tax}</td>
             </tr>
             <tr>
               <td>House Rent Allowance</td>
-              <td>${data.hra}</td>
+              <td>${data?.hra}</td>
               <td>Provident Fund</td>
               <td>0</td>
             </tr>
             <tr>
               <td>Special Allowance</td>
-              <td>${data.specialAllowance}</td>
+              <td>${data?.specialAllowance}</td>
               <td>Leave Without Pay (Unpaid Days)</td>
               <td>${""}</td>
             </tr>
             <tr>
               <td>Other Allowance</td>
-              <td>${data.allowances}</td>
+              <td>${data?.allowances}</td>
               <td>Half Day Leave</td>
               <td>0</td>
             </tr>
@@ -511,13 +511,13 @@ export function payslipHTML(data) {
               <td></td>
               <td></td>
               <td>Other Deductions</td>
-              <td>${data.deductions}</td>
+              <td>${data?.deductions}</td>
             </tr>
             <tr>
               <td><strong>Gross Earnings</strong></td>
-              <td></td>
+              <td>${data?.allowances}</td>
               <td><strong>Total Deductions</strong></td>
-              <td>${data.deductions}</td>
+              <td>${data?.tax + data?.}</td>
             </tr>
           </table>
         </div>
@@ -528,12 +528,12 @@ export function payslipHTML(data) {
             <div class="total-title">TOTAL NET PAYABLE</div>
             <div class="total-text">Gross Earnings - Total Deductions</div>
           </div>
-          <div class="total-right">${data.netPay}</div>
+          <div class="total-right">${data?.netPay}</div>
         </div>
 
         <!-- Amount in Words -->
         <div class="section">
-          <p><strong>Amount in Words:</strong>${data.netPayInWords}</p>
+          <p><strong>Amount in Words:</strong>${data?.netPayInWords}</p>
         </div>
 
         <!-- Footer -->

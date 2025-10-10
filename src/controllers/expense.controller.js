@@ -6,7 +6,7 @@ import { userModel } from "../models/User.model.js";
 // CREATE a new expense
 export const createExpense = async (req, res) => {
   try {
-    const { title, description, amount } = req.body;
+    const { title, description, amount, dueDate } = req.body;
     const { Role, FirstName, LastName, _id: hrId } = req.user;
 
     if (
@@ -31,7 +31,9 @@ export const createExpense = async (req, res) => {
       title,
       description,
       amount,
+      dueDate,
       createdBy: hrId,
+      updatedBy: hrId,
     });
 
     //  Notify all ADMIN users
@@ -60,8 +62,9 @@ export const createExpense = async (req, res) => {
 
 export const updateExpense = async (req, res) => {
   const { id } = req.params;
-  const { title, description, amount } = req.body;
-  const { Role, FirstName, LastName, _id: hrId } = req.user;
+  const { status } = req.body;
+
+  const { Role, FirstName, LastName, _id: AdminId } = req.user;
 
   if (!isValidObjectId(id)) {
     return res
@@ -69,9 +72,15 @@ export const updateExpense = async (req, res) => {
       .json({ success: false, message: "Invalid expense ID" });
   }
 
-  if (Role !== "HR") {
+  if (!status) {
+    return res
+      .status(404)
+      .json({ success: false, message: "status is required" });
+  }
+
+  if (Role !== "ADMIN") {
     return res.json({
-      message: "Only HR can update expenses",
+      message: "Only Admin can update expenses",
       success: false,
     });
   }
@@ -84,23 +93,13 @@ export const updateExpense = async (req, res) => {
         .json({ success: false, message: "Expense not found" });
     }
 
-    //  Ensure only creator can update
-    if (!exp.createdBy.equals(hrId)) {
-      return res.status(403).json({
-        success: false,
-        message: "Not allowed to update this expense",
-      });
-    }
-
-    //  Update fields
-    exp.title = title || exp.title;
-    exp.description = description || exp.description;
-    exp.amount = amount || exp.amount;
+    exp.status = status;
+    exp.updatedBy = AdminId;
 
     const updatedExpense = await exp.save();
 
-    // 🔔 Notify all ADMIN users
-    const adminUsers = await userModel.find({ Role: "ADMIN" }, "_id");
+    //  Notify all hr users
+    const adminUsers = await userModel.find({ Role: "HR" }, "_id");
     const adminIds = adminUsers.map((u) => u._id);
 
     await sendNotification({
@@ -179,7 +178,6 @@ export const deleteExpense = async (req, res) => {
     });
   }
 };
-
 // GET single expense
 export const getExpenseById = async (req, res) => {
   const { id } = req.params;

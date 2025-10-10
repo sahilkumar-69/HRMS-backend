@@ -1,6 +1,6 @@
-const monthYear = new Date("2023-02").toLocaleString("default", {
-  month: "long",
-  year: "numeric",
-});
+const  person = { 
+  name : "John",
+  age : 30
+}
 
-console.log(monthYear)
+console.log(person.cl);

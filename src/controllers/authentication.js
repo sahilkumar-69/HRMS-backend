@@ -137,7 +137,6 @@ const userSignUp = async (req, res) => {
       Email,
       Phone,
       Dob,
-      Salary,
       Department,
       Designation,
       Role,
@@ -217,7 +216,7 @@ const userSignUp = async (req, res) => {
         Branch,
       },
       EmergencyPhone,
-      Salary,
+      Salary: Salary || null,
       EmergencyName,
       EmergencyRelation,
       Role,
@@ -533,8 +532,6 @@ const generatePayslip = async (req, res) => {
       tax: Number(tax) ?? 0,
     });
 
-    // console.log("cals", calc);
-
     const dataForTemplate = {
       ...payload,
       ...user,
@@ -553,15 +550,7 @@ const generatePayslip = async (req, res) => {
         Number2Word.toWords(calc.netPay).toUpperCase() + " RUPEES ONLY",
     };
 
-    // console.log("datafortemplate", dataForTemplate);
-
     const html = payslipHTML(dataForTemplate);
-
-    // fs.writeFileSync("./payslip.html", html);
-
-    // console.log("html", html);
-
-    // return;
 
     const browser = await puppeteer.launch({
       headless: true,
@@ -585,7 +574,7 @@ const generatePayslip = async (req, res) => {
       dataForTemplate.month
     );
 
-    console.log("uploadresult", updoadResult);
+    // console.log("uploadresult", updoadResult);
 
     if (!updoadResult) {
       return res.status(500).json({
