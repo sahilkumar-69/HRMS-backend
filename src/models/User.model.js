@@ -9,7 +9,7 @@ const userSchema = new mongoose.Schema(
       unique: true,
       required: true,
       default: () =>
-        `EMP-${new mongoose.Types.ObjectId()
+        `DEV-${new mongoose.Types.ObjectId()
           .toString()
           .slice(-6)
           .toUpperCase()}`,
@@ -32,6 +32,8 @@ const userSchema = new mongoose.Schema(
     // Job-related info
     Department: { type: String, required: true },
 
+    Designation: { type: String, required: true },
+
     JoiningDate: { type: Date, default: Date.now },
     // Security
     Password: { type: String, required: true }, // should be hashed with bcrypt
@@ -46,6 +48,25 @@ const userSchema = new mongoose.Schema(
     Salary: { type: Number, require: true },
 
     AllowedTabs: [{ type: String }],
+
+    AadharNumber: {
+      type: String,
+      require: true,
+      unique: true,
+    },
+
+    PanNumber: {
+      type: String,
+      require: true,
+      unique: true,
+    },
+
+    BankDetails: {
+      AccountNumber: { type: Number, require: true, unique: true },
+      IFSC: { type: String, require: true },
+      BankName: { type: String, require: true },
+      Branch: { type: String, require: true },
+    },
 
     EmergencyName: {
       type: String,
@@ -71,14 +92,22 @@ const userSchema = new mongoose.Schema(
     Tasks: [{ type: mongoose.Schema.Types.ObjectId, ref: "Task" }],
 
     Notifications: [
-      { type: mongoose.Schema.Types.ObjectId, ref: "notifications" },
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "notifications",
+        default: [],
+      },
     ],
 
-    Leaves: [{ type: mongoose.Schema.Types.ObjectId, ref: "leaveModel" }],
+    Leaves: [
+      { type: mongoose.Schema.Types.ObjectId, ref: "leaveModel", default: [] },
+    ],
 
-    PaymentHistory: [{ type: Schema.Types.ObjectId, ref: "payment" }],
+    PaymentHistory: [
+      { type: Schema.Types.ObjectId, ref: "payment", default: [] },
+    ],
 
-    JoinedTeams: [{ type: Schema.Types.ObjectId, ref: "Team" }],
+    JoinedTeams: [{ type: Schema.Types.ObjectId, ref: "Team", default: [] }],
 
     createdBy: { type: Schema.Types.ObjectId, ref: "userModel" },
 

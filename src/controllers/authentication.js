@@ -3,14 +3,23 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import Otp from "../models/otp.model.js";
 
+import fs from "fs";
+import PDFDocument from "pdfkit";
+import Number2Word from "number-to-words";
 import uploadOnCloudinary, {
   deleteFromCloudinary,
+  uploadPdfBufferOnCloudinary,
 } from "../utils/Cloudinary.js";
 import { isUserExists } from "../utils/IsUserExists.js";
 import { generateToken } from "../utils/generateToken.js";
 import { hashOTP } from "../utils/otp.js";
 import { sendMail } from "../utils/nodemailer.js";
 import { sendNotification } from "../utils/sendNotification.js";
+import puppeteer from "puppeteer";
+import { PaySlip } from "../models/payslip.model.js";
+import { payslipHTML } from "../templates/paySlip.template.js";
+import { calculateSalary } from "../utils/calculateDays.js";
+// import streamifier  from 'strimi'
 
 const userLogin = async (req, res) => {
   try {
@@ -92,22 +101,30 @@ const userLogin = async (req, res) => {
 };
 
 const userSignUp = async (req, res) => {
+  // console.log(req.body);
+
   const {
     FirstName,
     LastName,
     Email,
     Phone,
+    Salary,
     Dob,
     Department,
-    // Designation,
-    Salary,
+    Designation,
+    PanNumber,
+    AadharNumber,
+    BankName,
+    AccountNumber,
+    JoiningDate,
+    IFSC,
+    Branch,
+    Role,
     Permissions,
     Address,
-    Role,
     EmergencyPhone,
     EmergencyName,
     EmergencyRelation,
-    JoiningDate,
     Password,
     AllowedTabs,
   } = req.body;
@@ -122,7 +139,7 @@ const userSignUp = async (req, res) => {
       Dob,
       Salary,
       Department,
-      // Designation,
+      Designation,
       Role,
       Address,
       EmergencyPhone,
@@ -170,7 +187,7 @@ const userSignUp = async (req, res) => {
 
     var cloudRes = await uploadOnCloudinary(fileStr);
 
-    if (!cloudRes) {
+    if (!cloudRes.success) {
       cloudRes && (await deleteFromCloudinary(cloudRes.response.public_id));
       return res
         .status(400)
@@ -186,10 +203,19 @@ const userSignUp = async (req, res) => {
       Department,
       Profile_url: cloudRes.response.secure_url,
       Profile_Public_id: cloudRes.response.public_id,
-      // Designation,
+      Designation,
       Permissions,
       Address,
       JoiningDate,
+      Designation,
+      PanNumber,
+      AadharNumber,
+      BankDetails: {
+        BankName,
+        AccountNumber,
+        IFSC,
+        Branch,
+      },
       EmergencyPhone,
       Salary,
       EmergencyName,
@@ -197,12 +223,19 @@ const userSignUp = async (req, res) => {
       Role,
       AllowedTabs,
       Password,
+      createdBy: req.user._id,
+      updatedBy: req.user._id,
     });
 
-    const savedUser = await user.save();
+    // console.log("before save user", user);
+
+    var savedUser = await user.save();
+
+    // console.log("after save user", savedUser);
 
     if (!savedUser) {
-      cloudRes && (await deleteFromCloudinary(cloudRes.response.public_id));
+      cloudRes.success &&
+        (await deleteFromCloudinary(cloudRes.response.public_id));
 
       return res.status(500).json({
         success: false,
@@ -211,29 +244,32 @@ const userSignUp = async (req, res) => {
     }
 
     const recipientIds = await userModel.find({ Role: "HR" }).select("_id");
+    console.log("recipientIds", recipientIds);
 
     const notificationParams = {
-      recipients: recipientIds.map((id) => id.toString()),
+      recipients: recipientIds.map((id) => id._id.toString()),
       title: "New Employee joined",
-      message: `New Employee named ${savedUser.FirstName} ${savedUser.LastName} joined as ${savedUser.Role}`,
+      message: `New Employee named ${savedUser.FirstName} ${savedUser.LastName} joined as ${savedUser.Designation}`,
       data: "",
     };
 
     await sendNotification(notificationParams);
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       message: "User signup successfully",
       user: savedUser,
-      // accessToken,
     });
   } catch (error) {
-    cloudRes && (await deleteFromCloudinary(cloudRes.response.public_id));
+    // await userModel.findByIdAndDelete(savedUser?._id);
+    cloudRes.success &&
+      (await deleteFromCloudinary(cloudRes.response.public_id));
 
+    console.log(error);
     return res.status(500).json({
       success: false,
-      message: "Can't save to db",
-      error: error.message,
+      message: error.message,
+      error: error,
     });
   }
 };
@@ -341,6 +377,7 @@ const getAllEmp = async (req, res) => {
       message: "Emp fetched",
       success: true,
       data: allEmployees,
+      Emps,
     });
   } catch (error) {
     res.json(500).json({
@@ -443,14 +480,234 @@ const verifyOtp = async (req, res) => {
   res.render("resetPassword", { email, token });
 };
 
+const generatePayslip = async (req, res) => {
+  try {
+    // accept JSON payload with employee info OR a payslip id param
+
+    const payload = req.body;
+
+    const {
+      employeeId,
+      AadharCardNumber,
+      PANCardNumber,
+      month,
+      paidDays,
+      unPaidDays,
+      basic,
+      hra,
+      tax,
+      allowances,
+      deductions,
+    } = payload;
+
+    // console.log("payload", req.body);
+    if (
+      !employeeId ||
+      !employeeId.trim() ||
+      !PANCardNumber ||
+      !PANCardNumber.trim() ||
+      !AadharCardNumber ||
+      !AadharCardNumber.trim() ||
+      !basic
+    ) {
+      return res
+        .status(400)
+        .json({ message: "Missing required fields", success: false });
+    }
+
+    const user = await userModel.findById(employeeId);
+
+    // console.log("user", user);
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ message: "Employee not found", success: false });
+    }
+
+    const calc = calculateSalary({
+      basic: Number(basic) || 0,
+      hra: Number(hra) ?? 0,
+      allowances: allowances || [],
+      deductions: deductions || [],
+      tax: Number(tax) ?? 0,
+    });
+
+    // console.log("cals", calc);
+
+    const dataForTemplate = {
+      ...payload,
+      ...user,
+      basic: calc.basic,
+      hra: calc.hra,
+      allowances: calc.allowancesTotal,
+      deductions: calc.deductionsTotal,
+      gross: calc.gross,
+      tax: calc.tax,
+      netPay: calc.netPay,
+      MONTH: new Date(month).toLocaleString("default", {
+        month: "long",
+        year: "numeric",
+      }),
+      netPayInWords:
+        Number2Word.toWords(calc.netPay).toUpperCase() + " RUPEES ONLY",
+    };
+
+    // console.log("datafortemplate", dataForTemplate);
+
+    const html = payslipHTML(dataForTemplate);
+
+    // fs.writeFileSync("./payslip.html", html);
+
+    // console.log("html", html);
+
+    // return;
+
+    const browser = await puppeteer.launch({
+      headless: true,
+    });
+
+    const page = await browser.newPage();
+
+    await page.setContent(html, { waitUntil: "networkidle0" });
+
+    const pdfBuffer = await page.pdf({
+      format: "A4",
+      printBackground: true,
+      // margin: { top: "20px", bottom: "20px" },
+    });
+
+    await browser.close();
+
+    const updoadResult = await uploadPdfBufferOnCloudinary(
+      pdfBuffer,
+      user.FirstName + "_" + user.LastName,
+      dataForTemplate.month
+    );
+
+    console.log("uploadresult", updoadResult);
+
+    if (!updoadResult) {
+      return res.status(500).json({
+        message: "Failed to upload PDF",
+        success: false,
+        error: updoadResult,
+      });
+    }
+
+    const payslipRecord = await PaySlip.create({
+      employeeId: user._id,
+      month: month,
+      netPay: calc.netPay,
+      secure_url: updoadResult.secure_url,
+      public_id: updoadResult.public_id,
+      createdBy: req.user._id,
+      lastUpdatedBy: req.user._id,
+    });
+
+    if (!payslipRecord) {
+      updoadResult?.public_id &&
+        (await deleteFromCloudinary(updoadResult?.public_id));
+
+      return res.status(500).json({
+        message: "Failed to upload PDF",
+        success: false,
+        error: updoadResult,
+      });
+    }
+
+    await sendNotification({
+      recipients: user._id.toString(),
+      title: "New Payslip Generated",
+      message: `Your payslip for ${dataForTemplate.month} is now available.`,
+      data: "",
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Payslip generated successfully",
+      pdfUrl: updoadResult.secure_url,
+      data: payslipRecord,
+    });
+
+    // Launch puppeteer
+    // const browser = await puppeteer.launch({
+    //   args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    //   headless: true,
+    // });
+    // const page = await browser.newPage();
+    // await page.setContent(html, { waitUntil: "networkidle0" });
+    // const pdfBuffer = await page.pdf({
+    //   format: "A4",
+    //   printBackground: true,
+    //   margin: { top: "20px", bottom: "20px" },
+    // });
+    // await browser.close();
+
+    // // Optionally save metadata to DB and persist file somewhere (omitted for brevity)
+    // // const saved = await Payslip.create({ ...dataForTemplate, pdfPath: "s3://..." });
+
+    // // Return PDF
+    // res.set({
+    //   "Content-Type": "application/pdf",
+    //   "Content-Length": pdfBuffer.length,
+    //   "Content-Disposition": `attachment; filename="${
+    //     payload.name || "payslip"
+    //   }-${dataForTemplate.month}.pdf"`,
+    // });
+
+    // return res.send(pdfBuffer);
+  } catch (err) {
+    console.error("Error generating payslip:", err);
+    return res
+      .status(500)
+      .json({ message: "Failed to generate payslip", error: err.message });
+  }
+};
+
+const getPaySlip = async (req, res) => {
+  try {
+    const { _id } = req.user;
+
+    const payslip = await PaySlip.find({ employeeId: _id });
+
+    console.log(payslip);
+
+    return res.status(200).json({
+      message: "Payslip fetched",
+      success: true,
+      payslip,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: error.message,
+      success: false,
+    });
+  }
+};
+
+const updatePaySlip = async (req, res) => {
+  try {
+  } catch (error) {}
+};
+
+const deletePaySlip = async (req, res) => {
+  try {
+  } catch (error) {}
+};
+
 export {
   userLogin,
   userSignUp,
   updateUser,
   deleteUser,
   getUserById,
+  getPaySlip,
+  deletePaySlip,
+  updatePaySlip,
   getAllEmp,
   forgotPassword,
+  generatePayslip,
   updatePassword,
   verifyOtp,
 };
