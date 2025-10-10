@@ -1,0 +1,549 @@
+export function payslipHTML(data) {
+  // console.log("jjjjjjjjjjjjjjjjjjjjj", data._doc);
+  return `
+  <!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Payslip - ${data._doc.FirstName}_${data._doc.LastName}_${data.month}</title>
+    <style>
+      body {
+        font-family: 'Segoe UI', Arial, sans-serif;
+        background-color: #f5f8fb;
+        margin: 0;
+        padding: 0;
+        color: #333;
+      }
+
+      .payslip {
+        width: 800px;
+        margin: 40px auto;
+        background: #fff;
+        border: 1px solid #d5dfe8;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        border-radius: 6px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      /* Watermark */
+      .payslip::before {
+        content: '';
+        background: url('https://res.cloudinary.com/sahil-kumar/image/upload/v1759921175/logog_fgriaz.png') center center no-repeat;
+        background-size: 550px;
+        opacity: 0.12;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+      }
+
+      .content {
+        position: relative;
+        z-index: 2;
+      }
+
+      /* Header */
+      .header {
+        background-color: #ffffff;
+        border-bottom: 3px solid #0f3d64;
+      }
+
+      .header-top {
+        width: 100%;
+        height: 30px;
+        display: flex;
+        border-top-left-radius: 6px;
+        border-top-right-radius: 6px;
+        overflow: hidden;
+      }
+
+      .header-top::before {
+        content: '';
+        width: 70%;
+        height: 100%;
+        background-color: #0f3d64; /* Dark navy blue */
+        border-top-right-radius: 12px;
+      }
+
+      .header-top::after {
+        content: '';
+        flex: 1;
+        background-color: #7f96b8; /* Light blue tone */
+        height: 100%;
+      }
+
+      .header-main {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 30px;
+      }
+
+      .header-left {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+
+      .header-left img {
+        width: 65px;
+        height: 65px;
+      }
+
+      .company-title {
+        color: #0f3d64;
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+      }
+
+      .divider {
+        width: 1px;
+        background-color: #0f3d64;
+        height: 60px;
+        margin: 0 25px;
+      }
+
+      .header-right {
+        font-size: 12px;
+        line-height: 1.6;
+        color: #0f3d64;
+      }
+
+      .header-right b {
+        font-weight: 700;
+      }
+
+      .title-bar {
+        text-align: right;
+        font-weight: bold;
+        color: #0f3d64;
+        padding: 10px 30px;
+        font-size: 13px;
+        background-color: #f3f7fb;
+        /* border-top: 1px solid #d9e2ec; */
+      }
+
+      /* Body */
+      .section {
+        padding: 20px 30px;
+        display: flex;
+        align-items: left;
+        justify-content: end;
+        font-weight: normal;
+      }
+
+      h3 {
+        font-size: 14px;
+        color: #0f3d64;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+      }
+
+      .employee-summary {
+        width: 80%;
+        float: right;
+      }
+
+      .employee-summary table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+
+      .employee-summary td {
+        padding: 6px 4px;
+      }
+
+      .employee-summary td:first-child {
+        width: 35%;
+        color: #0f3d64;
+      }
+
+      .pay-summary {
+        width: 230px;
+        float: right;
+        border: 1px solid #cde3d7;
+        border-radius: 8px;
+        background-color: #ffffff;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        font-family: 'Segoe UI', Arial, sans-serif;
+        overflow: hidden;
+      }
+
+      /* Header (Rs. + Total Net Pay) */
+      .pay-summary-header {
+        background-color: #eaf7ee;
+        border-left: 4px solid #39a845;
+        padding: 8px 10px;
+        border-bottom: 1px solid #d8e4da;
+      }
+
+      .pay-summary-header h4 {
+        margin: 0;
+        font-size: 20px;
+        color: #000;
+        font-weight: bold;
+      }
+
+      .pay-summary-header .amount {
+        font-size: 13px;
+        color: #4b4b4b;
+        margin-top: 2px;
+      }
+
+      /* Bottom Table (Paid Days etc.) */
+      .pay-summary table {
+        width: 100%;
+        font-size: 12px;
+        margin-top: 8px;
+        border-collapse: collapse;
+        padding: 0 10px;
+      }
+
+      .pay-summary td {
+        padding: 3px 10px;
+        color: #333;
+      }
+
+      .account-details {
+        clear: both;
+        margin-top: 30px;
+      }
+
+      .account-details table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+        table-layout: fixed;
+      }
+
+      .account-details td {
+        padding: 6px 4px;
+      }
+
+      .account-details td:first-child {
+        /* width: 25%; */
+        /* color: #0f3d64; */
+      }
+
+      /* Rounded Salary Table */
+      .salary-container {
+        border: 1px solid #d5dee7;
+        border-radius: 8px;
+        /* overflow: hidden; */
+        /* box-shadow: 0 2px 6px rgba(0,0,0,0.05); */
+        /* background: #fff; */
+      }
+
+      table.salary {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+
+      table.salary th,
+      table.salary td {
+        padding: 8px 10px;
+        text-align: left;
+        border-bottom: 1px solid #e4e8ef;
+      }
+
+      table.salary th {
+        /* background-color: #f2f6fa; */
+        /* color: #0f3d64; */
+        font-weight: bold;
+      }
+
+      table.salary tr:last-child td {
+        border-bottom: none;
+      }
+
+      table.salary td strong {
+        color: #0f3d64;
+      }
+
+      /* Total */
+      /* .total-section {
+    background-color: #e7f5ec;
+    border: 1px solid #cde3d7;
+    border-radius: 4px;
+    padding: 12px 15px;
+    margin: 25px 30px 10px;
+    font-weight: bold;
+    color: #0f3d64;
+  } */
+
+      .total-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border: 1px solid #d5dee7;
+        border-radius: 8px;
+        overflow: hidden;
+        margin: 25px 30px 10px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+        background: linear-gradient(to right, #ffffff 82%, #eaf7ee 82%);
+        font-family: 'Segoe UI', Arial, sans-serif;
+      }
+
+      .total-left {
+        padding: 10px 15px;
+      }
+
+      .total-title {
+        font-weight: 700;
+        font-size: 13px;
+        color: #000;
+      }
+
+      .total-text {
+        font-size: 12px;
+        color: #4b4b4b;
+        margin-top: 2px;
+      }
+
+      /* Light green right-side box */
+      .total-right {
+        margin-left: 5px;
+        width: 18%;
+        background-color: #eaf7ee; /* soft green */
+        height: 100%;
+      }
+
+      .footer {
+        text-align: center;
+        font-size: 12px;
+        color: #666;
+        padding: 15px 0 25px;
+        border-top: 1px solid #dce4ec;
+        margin-top: 15px;
+      }
+
+      .bottom-bar {
+        width: 100%;
+        height: 30px;
+        display: flex;
+        position: relative;
+        margin-top: 20px;
+        border-top: 1px solid #ccc;
+      }
+
+      .bottom-bar::before {
+        content: '';
+        width: 65%;
+        height: 100%;
+        background-color: #6b85ab; /* dark blue */
+        border-top-right-radius: 12px; /* curved corner */
+      }
+
+      .bottom-bar::after {
+        content: '';
+        flex: 2;
+        background-color: #002d72; /* light blue */
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="payslip">
+      <div class="content">
+        <!-- Header -->
+        <div class="header">
+          <div class="header-top"></div>
+          <div class="header-main">
+            <div class="header-left">
+              <img src="https://res.cloudinary.com/sahil-kumar/image/upload/v1759921175/logog_fgriaz.png" alt="Devnexus Logo" />
+              <div class="company-title">
+                DEVNEXUS SOLUTIONS PRIVATE LIMITED
+              </div>
+            </div>
+            <div class="divider"></div>
+            <div class="header-right">
+              <b>Phone:</b> +91 9710101160<br />
+              <b>Web:</b> contactus@devnexus.in<br />
+              <b>ADD:</b> 26B, Tower B-2, Spaze iTech Park<br />
+              Sector-49, Gurgaon
+            </div>
+          </div>
+        </div>
+
+        <div class="title-bar">Payslip For the Month</div>
+
+        <!-- Employee Summary and Pay Summary -->
+        <div class="section">
+          <div class="employee-summary">
+            <h3>Employee Summary</h3>
+            <table>
+              <tr>
+                <td>Employee Name</td>
+                <td>:</td>
+                <td>${data._doc.FirstName} ${data._doc.LastName}</td>
+              </tr>
+              <tr>
+                <td>Employee ID</td>
+                <td>:</td>
+                <td>${data._doc.EmployeeId}</td>
+              </tr>
+              <tr>
+                <td>Pay Period</td>
+                <td>:</td>
+                <td>${data.month}</td>
+              </tr>
+              <tr>
+                <td>Pay Date</td>
+                <td>:</td>
+                <td>05/10/2025</td>
+              </tr>
+            </table>
+          </div>
+
+          <div class="pay-summary">
+            <div class="pay-summary-header">
+              <h4>Rs.${data.netPay}</h4>
+              <div class="amount">Total Net Pay</div>
+            </div>
+            <table>
+              <tr>
+                <td><strong>Paid Days</strong>:${data.paidDays}</td>
+                <td></td>
+              </tr>
+              <tr>
+                <td><strong>LOP Days</strong>:${data.LOPDays}</td>
+                <td></td>
+              </tr>
+              <tr>
+                <td><strong>Paid Leaves:</strong>:${data.paidLeaves}</td>
+                <td></td>
+              </tr>
+            </table>
+          </div>
+        </div>
+
+        <!-- Account Details -->
+        <div class="section account-details">
+          <table>
+            <tr>
+              <td>Designation</td>
+              <td>:</td>
+              <td>${data._doc.Role}</td>
+              <td>Department</td>
+              <td>:</td>
+              <td>${data._doc.Department}</td>
+            </tr>
+            <tr>
+              <td>Pan No</td>
+              <td>:</td>
+              <td>${data.PANCardNumber}</td>
+              <td>Aadhaar No</td>
+              <td>:</td>
+              <td>${data.AadharCardNumber}</td>
+            </tr>
+            <tr>
+              <td>Bank Name</td>
+              <td>:</td>
+              <td>${data._doc.BankDetails.BankName}</td>
+              <td>Account Holder Name</td>
+              <td>:</td>
+              <td>${data._doc.FirstName} ${data._doc.LastName}</td>
+            </tr>
+            <tr>
+              <td>Account Number</td>
+              <td>:</td>
+              <td>${data._doc.BankDetails.AccountNumber}</td>
+              <td>IFSC Code</td>
+              <td>:</td>
+              <td>${data._doc.BankDetails.IFSC}</td>
+            </tr>
+            <tr>
+              <td>Gross Salary</td>
+              <td>:</td>
+              <td>${data.gross}</td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- Rounded Earnings/Deductions Section -->
+        <div class="section salary-container">
+          <table class="salary">
+            <tr>
+              <th>EARNINGS</th>
+              <th>AMOUNT</th>
+              <th>DEDUCTIONS</th>
+              <th>AMOUNT</th>
+            </tr>
+            <tr>
+              <td>Basic</td>
+              <td>${data.basic}</td>
+              <td>Income Tax</td>
+              <td>${data.tax}</td>
+            </tr>
+            <tr>
+              <td>House Rent Allowance</td>
+              <td>${data.hra}</td>
+              <td>Provident Fund</td>
+              <td>0</td>
+            </tr>
+            <tr>
+              <td>Special Allowance</td>
+              <td>700</td>
+              <td>Leave Without Pay (Unpaid Days)</td>
+              <td>0</td>
+            </tr>
+            <tr>
+              <td>Other Allowance</td>
+              <td>0</td>
+              <td>Half Day Leave</td>
+              <td>0</td>
+            </tr>
+            <tr>
+              <td></td>
+              <td></td>
+              <td>Advance Recovery</td>
+              <td>0</td>
+            </tr>
+            <tr>
+              <td></td>
+              <td></td>
+              <td>Other Deductions</td>
+              <td>0</td>
+            </tr>
+            <tr>
+              <td><strong>Gross Earnings</strong></td>
+              <td></td>
+              <td><strong>Total Deductions</strong></td>
+              <td>${data.deductions}</td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- Total -->
+        <div class="total-section">
+          <div class="total-left">
+            <div class="total-title">TOTAL NET PAYABLE</div>
+            <div class="total-text">Gross Earnings - Total Deductions</div>
+          </div>
+          <div class="total-right">${data.netPay}</div>
+        </div>
+
+        <!-- Amount in Words -->
+        <div class="section">
+          <p><strong>Amount in Words:</strong>${data.netPayInWords}</p>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+          -- This is a computer-generated payslip and does not require a
+          physical signature. --
+        </div>
+      </div>
+      <div class="bottom-bar"></div>
+    </div>
+  </body>
+</html>
+`;
+}

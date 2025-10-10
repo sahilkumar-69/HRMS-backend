@@ -17,4 +17,33 @@ function daysBetween(startDate, endDate) {
   return diffDays;
 }
 
-export { daysBetween };
+// services/salaryCalculator.js
+function calculateSalary({
+  basic = 0,
+  hra = 0,
+  allowances = [],
+  deductions = [],
+  tax = 0,
+}) {
+  // Basic assumes number inputs -> calculate HRA, gross, tax, net
+  // const hra = +(basic * (hraPercent / 100));
+  const allowancesTotal = allowances.reduce((s, a) => s + (a.amount || 0), 0);
+  const deductionsTotal = deductions.reduce((s, d) => s + (d.amount || 0), 0);
+
+  const gross = basic + hra + allowancesTotal;
+  // const tax = +(gross * tax);
+  const netPay = +(gross - tax - deductionsTotal);
+
+  // return rounded values
+  return {
+    basic: +basic.toFixed(2),
+    hra: +hra.toFixed(2),
+    allowancesTotal: +allowancesTotal.toFixed(2),
+    deductionsTotal: +deductionsTotal.toFixed(2),
+    gross: +gross.toFixed(2),
+    tax: +tax.toFixed(2),
+    netPay: +netPay.toFixed(2),
+  };
+}
+
+export { daysBetween, calculateSalary };

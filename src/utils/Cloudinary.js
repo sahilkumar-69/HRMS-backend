@@ -1,5 +1,6 @@
 import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
+import streamifier from "streamifier";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -26,7 +27,7 @@ const uploadOnCloudinary = async (tempLink, folder_name) => {
   }
 };
 
-export const deleteFromCloudinary = async (public_id) => {
+const deleteFromCloudinary = async (public_id) => {
   try {
     const deletePhoto = await cloudinary.uploader.destroy(public_id);
     return {
@@ -41,5 +42,37 @@ export const deleteFromCloudinary = async (public_id) => {
     };
   }
 };
+
+const uploadPdfBufferOnCloudinary = async (
+  buffer,
+
+  employeeName,
+  month
+) => {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder: "HRMS_PAYSLIPS_PDF",
+        resource_type: "auto",
+        format: "pdf",
+        public_id: `${employeeName}_${month}`,
+        timeout: 10000,
+      },
+      (error, result) => {
+        if (error) {
+          console.error("Error uploading PDF to Cloudinary:", error);
+          reject(error);
+        } else {
+          // console.log("PDF uploaded to Cloudinary:", result);
+          resolve(result);
+        }
+      }
+    );
+
+    streamifier.createReadStream(buffer).pipe(uploadStream);
+  });
+};
+
+export { deleteFromCloudinary, uploadPdfBufferOnCloudinary };
 
 export default uploadOnCloudinary;
