@@ -14,7 +14,18 @@ const expense_schema = new Schema(
       type: Number,
       required: true,
     },
+
+    dueDate: { type: Date },
+
     createdBy: { type: Schema.Types.ObjectId, ref: "users" },
+
+    updatedBy: { type: Schema.Types.ObjectId, ref: "users" },
+
+    status: {
+      type: String,
+      enum: ["PENDING", "PAID", "REJECTED"],
+      default: "PENDING",
+    },
   },
   { timestamps: true }
 );

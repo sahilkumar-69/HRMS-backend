@@ -8,7 +8,19 @@ let onlineUsers = new Map();
 
 export const initiateServer = (server) => {
   io = new Server(server, {
-    cors: { origin: "*" },
+    cors: {
+      origin: [
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://localhost:5175",
+        "https://devnexus-hrms.vercel.app",
+      ],
+      // methods: ["GET", "POST"],
+      methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+
+      allowedHeaders: ["Content-Type", "Authorization", "token"],
+      credentials: true,
+    },
   });
 
   io.on("connection", (socket) => {

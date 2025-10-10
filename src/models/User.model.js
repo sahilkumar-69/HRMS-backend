@@ -45,7 +45,7 @@ const userSchema = new mongoose.Schema(
     // ManagerId: { type: Schema.Types.ObjectId, ref: "User" }, // self-reference for reporting
     Address: { type: String, require: true },
 
-    Salary: { type: Number, require: true },
+    Salary: { type: Number },
 
     AllowedTabs: [{ type: String }],
 

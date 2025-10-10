@@ -23,7 +23,7 @@ expenseRoutes.get("/", getExpenses);
 expenseRoutes.get("/:id", getExpenseById);
 
 // Update an expense by ID
-expenseRoutes.put("/:id", updateExpense);
+expenseRoutes.patch("/:id", updateExpense);
 
 // Delete an expense by ID
 expenseRoutes.delete("/:id", deleteExpense);
