@@ -26,9 +26,7 @@ const createTask = async (req, res) => {
       !priority ||
       !dueDate ||
       !assigner ||
-      !assignee ||
-      !Array.isArray(assignee) ||
-      assignee.length === 0
+      !assignee
     ) {
       return res.status(400).json({
         success: false,
@@ -37,8 +35,8 @@ const createTask = async (req, res) => {
     }
 
     //  Validate assignees
-    const validatedAssignees = await User.find({ _id: { $in: assignee } });
-    if (validatedAssignees.length !== assignee.length) {
+    const validatedAssignees = await User.findById(assignee);
+    if (!validatedAssignees) {
       return res.json({
         success: false,
         message: "One or more assignees not found",

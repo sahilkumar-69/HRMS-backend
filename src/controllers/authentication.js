@@ -106,6 +106,7 @@ const userSignUp = async (req, res) => {
   const {
     FirstName,
     LastName,
+    Gender,
     Email,
     Phone,
     Salary,
@@ -121,7 +122,8 @@ const userSignUp = async (req, res) => {
     Branch,
     Role,
     Permissions,
-    Address,
+    PermanentAddress,
+    CurrentAddress,
     EmergencyPhone,
     EmergencyName,
     EmergencyRelation,
@@ -137,10 +139,19 @@ const userSignUp = async (req, res) => {
       Email,
       Phone,
       Dob,
+      PermanentAddress,
+      CurrentAddress,
       Department,
       Designation,
       Role,
-      Address,
+      Gender,
+      PanNumber,
+      AadharNumber,
+      BankName,
+      AccountNumber,
+      IFSC,
+      Branch,
+
       EmergencyPhone,
       EmergencyName,
       EmergencyRelation,
@@ -204,10 +215,12 @@ const userSignUp = async (req, res) => {
       Profile_Public_id: cloudRes.response.public_id,
       Designation,
       Permissions,
-      Address,
+      CurrentAddress,
+      PermanentAddress,
       JoiningDate,
       Designation,
       PanNumber,
+      Gender,
       AadharNumber,
       BankDetails: {
         BankName,
@@ -222,8 +235,8 @@ const userSignUp = async (req, res) => {
       Role,
       AllowedTabs,
       Password,
-      createdBy: req.user._id,
-      updatedBy: req.user._id,
+      createdBy: req?.user?._id || null,
+      updatedBy: req?.user?._id || null,
     });
 
     // console.log("before save user", user);
@@ -364,7 +377,10 @@ const deleteUser = async (req, res) => {
 
 const getAllEmp = async (req, res) => {
   try {
-    const Emps = await userModel.find().select("-Password");
+    const Emps = await userModel
+      .find()
+      .select("-Password")
+      .populate("Tasks", "title dueDate assigner");
 
     const allEmployees = {
       HR: Emps.filter((emp) => emp.Role == "HR"),
@@ -482,7 +498,6 @@ const verifyOtp = async (req, res) => {
 const generatePayslip = async (req, res) => {
   try {
     // accept JSON payload with employee info OR a payslip id param
-
     const payload = req.body;
 
     const {
@@ -492,6 +507,7 @@ const generatePayslip = async (req, res) => {
       month,
       paidDays,
       unPaidDays,
+      specialAllowance,
       basic,
       hra,
       tax,
@@ -525,6 +541,7 @@ const generatePayslip = async (req, res) => {
     }
 
     const calc = calculateSalary({
+      specialAllowance: Number(specialAllowance) ?? 0,
       basic: Number(basic) || 0,
       hra: Number(hra) ?? 0,
       allowances: allowances || [],
@@ -535,22 +552,20 @@ const generatePayslip = async (req, res) => {
     const dataForTemplate = {
       ...payload,
       ...user,
-      basic: calc.basic,
-      hra: calc.hra,
-      allowances: calc.allowancesTotal,
-      deductions: calc.deductionsTotal,
-      gross: calc.gross,
-      tax: calc.tax,
-      netPay: calc.netPay,
+      BASIC: calc.basic,
+      HRA: calc.hra,
+      ALLOWANCES: calc.allowancesTotal,
+      DEDUCTIONS: calc.deductionsTotal,
+      GROSS: calc.gross,
+      TAX: calc.tax,
+      // netPay: calc.netPay,
       MONTH: new Date(month).toLocaleString("default", {
         month: "long",
         year: "numeric",
       }),
-      netPayInWords:
-        Number2Word.toWords(calc.netPay).toUpperCase() + " RUPEES ONLY",
     };
 
-    const html = payslipHTML(dataForTemplate);
+    const { html, totalDeduction, netPay } = payslipHTML(dataForTemplate);
 
     const browser = await puppeteer.launch({
       headless: true,
@@ -568,7 +583,7 @@ const generatePayslip = async (req, res) => {
 
     await browser.close();
 
-    const updoadResult = await uploadPdfBufferOnCloudinary(
+    var updoadResult = await uploadPdfBufferOnCloudinary(
       pdfBuffer,
       user.FirstName + "_" + user.LastName,
       dataForTemplate.month
@@ -587,7 +602,8 @@ const generatePayslip = async (req, res) => {
     const payslipRecord = await PaySlip.create({
       employeeId: user._id,
       month: month,
-      netPay: calc.netPay,
+      payload,
+      netPay: netPay,
       secure_url: updoadResult.secure_url,
       public_id: updoadResult.public_id,
       createdBy: req.user._id,
@@ -647,6 +663,8 @@ const generatePayslip = async (req, res) => {
 
     // return res.send(pdfBuffer);
   } catch (err) {
+    updoadResult?.public_id &&
+      (await deleteFromCloudinary(updoadResult?.public_id));
     console.error("Error generating payslip:", err);
     return res
       .status(500)
@@ -685,6 +703,22 @@ const deletePaySlip = async (req, res) => {
   } catch (error) {}
 };
 
+const checkAuth = async (req, res) => {
+  if (req?.user) {
+    return res.status(200).json({
+      success: true,
+      message: "User authenticated",
+      accessToken: req.user.generateAccessToken(),
+      user: req.user,
+    });
+  } else {
+    return res.status(401).json({
+      success: false,
+      message: "Invalide token",
+    });
+  }
+};
+
 export {
   userLogin,
   userSignUp,
@@ -695,6 +729,7 @@ export {
   deletePaySlip,
   updatePaySlip,
   getAllEmp,
+  checkAuth,
   forgotPassword,
   generatePayslip,
   updatePassword,

@@ -19,6 +19,7 @@ function daysBetween(startDate, endDate) {
 
 // services/salaryCalculator.js
 function calculateSalary({
+  specialAllowance,
   basic = 0,
   hra = 0,
   allowances = [],
@@ -27,12 +28,18 @@ function calculateSalary({
 }) {
   // Basic assumes number inputs -> calculate HRA, gross, tax, net
   // const hra = +(basic * (hraPercent / 100));
-  const allowancesTotal = allowances.reduce((s, a) => s + (a.amount || 0), 0);
-  const deductionsTotal = deductions.reduce((s, d) => s + (d.amount || 0), 0);
+  const allowancesTotal = allowances.reduce(
+    (s, a) => s + (Number(a.amount) || 0),
+    0
+  );
+  const deductionsTotal = deductions.reduce(
+    (s, d) => s + (Number(d.amount) || 0),
+    0
+  );
 
-  const gross = basic + hra + allowancesTotal;
+  const gross = basic + hra + allowancesTotal + specialAllowance;
   // const tax = +(gross * tax);
-  const netPay = +(gross - tax - deductionsTotal);
+  // const netPay = +(gross - tax - deductionsTotal);
 
   // return rounded values
   return {
@@ -42,7 +49,7 @@ function calculateSalary({
     deductionsTotal: +deductionsTotal.toFixed(2),
     gross: +gross.toFixed(2),
     tax: +tax.toFixed(2),
-    netPay: +netPay.toFixed(2),
+    // netPay: +netPay.toFixed(2),
   };
 }
 

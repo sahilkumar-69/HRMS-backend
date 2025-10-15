@@ -1,13 +1,28 @@
+import Number2Word from "number-to-words";
 export function payslipHTML(data) {
-  return `
+  const totalDeduction = Math.floor(
+    data?.TAX +
+      data?.DEDUCTIONS +
+      Number(data?.advanceRecovery) +
+      Number(data?.PF) +
+      Number(data?.halfDay) * Math.round(Number(data?.perDayAmount / 2)) +
+      Number(data?.unPaidDays) * Number(data?.perDayAmount)
+  );
+
+  const netPay = data?.GROSS - totalDeduction;
+
+  const payInWords = Number2Word.toWords(netPay).toUpperCase() + " RUPEES ONLY";
+
+  return {
+    html: `
   <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Payslip - ${data?._doc.FirstName}_${data?._doc.LastName}_${
-    data?.month
-  }</title>
+      data?.month
+    }</title>
     <style>
       body {
         font-family: 'Segoe UI', Arial, sans-serif;
@@ -134,7 +149,7 @@ export function payslipHTML(data) {
         padding: 20px 30px;
         display: flex;
         align-items: left;
-        justify-content: end;
+        justify-content: start;
         font-weight: normal;
       }
 
@@ -373,7 +388,7 @@ export function payslipHTML(data) {
           </div>
         </div>
 
-        <div class="title-bar">Payslip For the Month</div>
+        <div class="title-bar">Payslip For the Month: ${data.MONTH}</div>
 
         <!-- Employee Summary and Pay Summary -->
         <div class="section">
@@ -382,22 +397,22 @@ export function payslipHTML(data) {
             <table>
               <tr>
                 <td>Employee Name</td>
-                <td>:</td>
+                <td>: </td>
                 <td>${data?._doc.FirstName} ${data?._doc.LastName}</td>
               </tr>
               <tr>
                 <td>Employee ID</td>
-                <td>:</td>
+                <td>: </td>
                 <td>${data?._doc.EmployeeId}</td>
               </tr>
               <tr>
                 <td>Pay Period</td>
-                <td>:</td>
+                <td>: </td>
                 <td>${data?.MONTH}</td>
               </tr>
               <tr>
                 <td>Pay Date</td>
-                <td>:</td>
+                <td>: </td>
                 <td>${data?.payDate.split("T")[0]}</td>
               </tr>
             </table>
@@ -405,20 +420,20 @@ export function payslipHTML(data) {
 
           <div class="pay-summary">
             <div class="pay-summary-header">
-              <h4>Rs.${data?.netPay}</h4>
+              <h4>Rs.${netPay}</h4>
               <div class="amount">Total Net Pay</div>
             </div>
             <table>
               <tr>
-                <td><strong>Paid Days</strong>:${data?.paidDays}</td>
+                <td><strong>Paid Days</strong>: ${data?.paidDays}</td>
                 <td></td>
               </tr>
               <tr>
-                <td><strong>LOP Days</strong>:${data?.unPaidDays || 0}</td>
+                <td><strong>LWP Days</strong>: ${data?.unPaidDays || 0}</td>
                 <td></td>
               </tr>
               <tr>
-                <td><strong>Paid Leaves:</strong>:${data?.paidLeaves || 0}</td>
+                <td><strong>Paid Leaves:</strong>: ${data?.paidLeaves || 0}</td>
                 <td></td>
               </tr>
             </table>
@@ -430,40 +445,40 @@ export function payslipHTML(data) {
           <table>
             <tr>
               <td>Designation</td>
-              <td>:</td>
+              <td>: </td>
               <td>${data?._doc.Role}</td>
               <td>Department</td>
-              <td>:</td>
+              <td>: </td>
               <td>${data?._doc.Department}</td>
             </tr>
             <tr>
               <td>Pan No</td>
-              <td>:</td>
+              <td>: </td>
               <td>${data?.PANCardNumber}</td>
               <td>Aadhaar No</td>
-              <td>:</td>
+              <td>: </td>
               <td>${data?.AadharCardNumber}</td>
             </tr>
             <tr>
               <td>Bank Name</td>
-              <td>:</td>
+              <td>: </td>
               <td>${data?._doc.BankDetails?.BankName}</td>
               <td>Account Holder Name</td>
-              <td>:</td>
+              <td>: </td>
               <td>${data?._doc.FirstName} ${data?._doc.LastName}</td>
             </tr>
             <tr>
               <td>Account Number</td>
-              <td>:</td>
+              <td>: </td>
               <td>${data?._doc.BankDetails?.AccountNumber}</td>
               <td>IFSC Code</td>
-              <td>:</td>
+              <td>: </td>
               <td>${data?._doc.BankDetails?.IFSC}</td>
             </tr>
             <tr>
               <td>Gross Salary</td>
-              <td>:</td>
-              <td>${data?.gross}</td>
+              <td>: </td>
+              <td>${data?.GROSS}</td>
             </tr>
           </table>
         </div>
@@ -479,27 +494,30 @@ export function payslipHTML(data) {
             </tr>
             <tr>
               <td>Basic</td>
-              <td>${data?.basic}</td>
+              <td>${data?.BASIC}</td>
               <td>Income Tax</td>
-              <td>${data?.tax}</td>
+              <td>${data?.TAX}</td>
             </tr>
             <tr>
               <td>House Rent Allowance</td>
-              <td>${data?.hra}</td>
+              <td>${data?.HRA}</td>
               <td>Provident Fund</td>
-              <td>0</td>
+              <td>${data?.PF}</td>
             </tr>
             <tr>
               <td>Special Allowance</td>
               <td>${data?.specialAllowance}</td>
               <td>Leave Without Pay (Unpaid Days)</td>
-              <td>${""}</td>
+              <td>${data?.perDayAmount * data?.unPaidDays}</td>
             </tr>
             <tr>
               <td>Other Allowance</td>
-              <td>${data?.allowances}</td>
+              <td>${data?.ALLOWANCES}</td>
               <td>Half Day Leave</td>
-              <td>0</td>
+              <td>${
+                Number(data?.halfDay) *
+                Math.round(Number(data?.perDayAmount) / 2)
+              }</td>
             </tr>
             <tr>
               <td></td>
@@ -511,13 +529,13 @@ export function payslipHTML(data) {
               <td></td>
               <td></td>
               <td>Other Deductions</td>
-              <td>${data?.deductions}</td>
+              <td>${data?.DEDUCTIONS}</td>
             </tr>
             <tr>
               <td><strong>Gross Earnings</strong></td>
-              <td>${data?.allowances}</td>
+              <td>${data?.GROSS}</td>
               <td><strong>Total Deductions</strong></td>
-              <td>${data?.tax + data?.}</td>
+              <td>${totalDeduction}</td>
             </tr>
           </table>
         </div>
@@ -528,12 +546,12 @@ export function payslipHTML(data) {
             <div class="total-title">TOTAL NET PAYABLE</div>
             <div class="total-text">Gross Earnings - Total Deductions</div>
           </div>
-          <div class="total-right">${data?.netPay}</div>
+          <div class="total-right">${netPay}</div>
         </div>
 
         <!-- Amount in Words -->
         <div class="section">
-          <p><strong>Amount in Words:</strong>${data?.netPayInWords}</p>
+          <p><strong>Amount in Words: </strong>${payInWords}</p>
         </div>
 
         <!-- Footer -->
@@ -546,5 +564,8 @@ export function payslipHTML(data) {
     </div>
   </body>
 </html>
-`;
+`,
+    totalDeduction,
+    netPay,
+  };
 }

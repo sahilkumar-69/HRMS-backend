@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  allAttendance,
   checkIn,
   checkOut,
   getAttendance,
@@ -9,6 +10,8 @@ import {
 const AttendanceRouter = Router();
 
 AttendanceRouter.route("/:userId").get(getAttendance);
+
+AttendanceRouter.route("/").get(allAttendance);
 
 AttendanceRouter.route("/checkin").post(checkIn);
 

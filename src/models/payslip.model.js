@@ -1,5 +1,5 @@
 // models/Payslip.js
-import { create } from "domain";
+
 import mongoose from "mongoose";
 
 const PayslipSchema = new mongoose.Schema({
@@ -7,6 +7,10 @@ const PayslipSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "users",
     required: false,
+  },
+  payload: {
+    type: Object,
+    required: true,
   },
 
   month: {

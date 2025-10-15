@@ -5,6 +5,7 @@ export const sendNotification = async ({
   recipients,
   title,
   message,
+  type,
   data,
 }) => {
   const io = getIo();
@@ -16,6 +17,7 @@ export const sendNotification = async ({
     recipients.map((recipient) => ({
       recipient,
       title,
+      type,
       message,
       data,
     }))

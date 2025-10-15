@@ -18,7 +18,7 @@ import { initiateServer } from "./src/utils/socketIO.js";
 import { salesRouter } from "./src/routes/sales.routes.js";
 import otpRouter from "./src/routes/otp.routes.js";
 import path from "path";
-import { authMiddleware } from "./src/middleware/authMiddleware.js";
+// import { authMiddleware } from "./src/middleware/authMiddleware.js";
 import { paymentRoutes } from "./src/routes/payment.routes.js";
 import expenseRoutes from "./src/routes/expense.routes.js";
 
