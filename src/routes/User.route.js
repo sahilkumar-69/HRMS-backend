@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  checkAuth,
   deletePaySlip,
   deleteUser,
   forgotPassword,
@@ -19,11 +20,14 @@ import { authMiddleware } from "../middleware/authMiddleware.js";
 const Route = Router();
 
 // USER RELATED ROUTES
+// console.log(__filename)
+
+Route.route("/checkAuth").get(authMiddleware,checkAuth);
 
 Route.route("/login").post(userLogin);
 
 Route.route("/add-employee").post(
-  authMiddleware,
+  // authMiddleware,
   uploadProfilePic.single("Profile"),
   userSignUp
 );

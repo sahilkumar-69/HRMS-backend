@@ -43,6 +43,8 @@ const checkIn = async (req, res) => {
 
     await record.save();
 
+    // await userModel.findByIdAndUpdate(userId)
+
     //  Notify user
     await sendNotification({
       recipients: userId.toString(),
@@ -142,4 +144,17 @@ const updateAttendance = async (req, res) => {
   }
 };
 
-export { checkIn, checkOut, getAttendance, updateAttendance };
+const allAttendance = async (req, res) => {
+  try {
+    const records = await Attendance.find()
+      .populate("user", "FirstName LastName Email Role")
+      .sort({ date: -1 });
+
+    res.json({ success: true, count: records.length, records });
+    // console.log(records);
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+export { checkIn, checkOut, getAttendance, allAttendance, updateAttendance };

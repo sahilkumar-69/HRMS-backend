@@ -1,6 +1,2 @@
-const  person = { 
-  name : "John",
-  age : 30
-}
+const num = 4324
 
-console.log(person.cl);

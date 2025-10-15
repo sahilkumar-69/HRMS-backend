@@ -26,6 +26,12 @@ const userSchema = new mongoose.Schema(
 
     Profile_url: String,
 
+    Gender: {
+      type: String,
+      enum: ["Male", "Female", "Other"],
+      required: true,
+    },
+
     Profile_Public_id: String,
 
     Dob: { type: Date },
@@ -43,7 +49,9 @@ const userSchema = new mongoose.Schema(
     Permissions: [{ type: String }], // fine-grained, e.g., ["manage_users", "approve_leave"]
     // Relational fields
     // ManagerId: { type: Schema.Types.ObjectId, ref: "User" }, // self-reference for reporting
-    Address: { type: String, require: true },
+    CurrentAddress: { type: String, require: true },
+
+    PermanentAddress: { type: String, require: true },
 
     Salary: { type: Number },
 

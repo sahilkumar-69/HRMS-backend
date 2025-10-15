@@ -15,19 +15,8 @@ export const authMiddleware = async (req, res, next) => {
         success: false,
       });
     }
-
-    // console.log(process.env.SECRET_TOKEN);
-
+ 
     const decodedToken = jwt.verify(token, process.env.SECRET_TOKEN);
-
-    // console.log("decoded token ", decodedToken);
-
-    // if (!decodedToken) {
-    //   return res.status(401).json({
-    //     message: "unauthorized token",
-    //     success: false,
-    //   });
-    // }
 
     const user = await userModel
       .findById(decodedToken._id)
