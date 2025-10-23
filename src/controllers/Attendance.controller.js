@@ -63,7 +63,6 @@ const checkIn = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
-
 // Checkout
 const checkOut = async (req, res) => {
   try {
@@ -82,7 +81,6 @@ const checkOut = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
-
 // Get attendance for one user
 const getAttendance = async (req, res) => {
   try {
@@ -150,8 +148,40 @@ const allAttendance = async (req, res) => {
       .populate("user", "FirstName LastName Email Role")
       .sort({ date: -1 });
 
-    res.json({ success: true, count: records.length, records });
-    // console.log(records);
+    //  Group records by user._id
+    const attendanceByUser = records.reduce((acc, record) => {
+      const userId = record.user?._id?.toString();
+      if (!userId) return acc;
+
+      if (!acc[userId]) {
+        acc[userId] = {
+          user: record.user, // store user info once
+          attendance: [], // array of all attendance records
+        };
+      }
+
+      acc[userId].attendance.push({
+        _id: record._id,
+        date: record.date,
+        checkIn: record.checkIn,
+        checkOut: record.checkOut,
+        status: record.status,
+        workingHours: record.workingHours,
+        checkInDate: record.checkInDate,
+        checkInTime: record.checkInTime,
+      });
+
+      return acc;
+    }, {});
+
+    res.json({
+      success: true,
+      totalUsers: Object.keys(attendanceByUser).length,
+      attendanceByUser,
+      records,
+    });
+
+    // console.log(attendanceByUser);
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

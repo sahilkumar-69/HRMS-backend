@@ -32,6 +32,8 @@ const allowedOrigins = [
   "https://devnexus-hrms.vercel.app",
   "https://hrms-devnexus-u6yd.vercel.app",
   "http://localhost:5173",
+  "http://localhost:4343",
+  "https://hrms-backend-9qzj.onrender.com/api",
   "http://localhost:5174",
   "http://localhost:5175",
   "http://localhost:5176",

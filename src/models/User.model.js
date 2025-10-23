@@ -24,13 +24,13 @@ const userSchema = new mongoose.Schema(
 
     Phone: String,
 
-    Profile_url: String,
-
     Gender: {
       type: String,
       enum: ["Male", "Female", "Other"],
       required: true,
     },
+
+    Profile_url: String,
 
     Profile_Public_id: String,
 
@@ -53,7 +53,7 @@ const userSchema = new mongoose.Schema(
 
     PermanentAddress: { type: String, require: true },
 
-    Salary: { type: Number },
+    Salary: { type: Number, default: 0 },
 
     AllowedTabs: [{ type: String }],
 
@@ -117,7 +117,7 @@ const userSchema = new mongoose.Schema(
 
     JoinedTeams: [{ type: Schema.Types.ObjectId, ref: "Team", default: [] }],
 
-    createdBy: { type: Schema.Types.ObjectId, ref: "userModel" },
+    // createdBy: { type: Schema.Types.ObjectId, ref: "userModel" },
 
     updatedBy: { type: Schema.Types.ObjectId, ref: "userModel" },
   },

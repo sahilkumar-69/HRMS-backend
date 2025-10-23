@@ -1,2 +1,3 @@
-const num = 4324
-
+const today = new Date().toLocaleDateString()
+ 
+console.log( today);

@@ -22,7 +22,7 @@ const Route = Router();
 // USER RELATED ROUTES
 // console.log(__filename)
 
-Route.route("/checkAuth").get(authMiddleware,checkAuth);
+Route.route("/checkAuth").get(authMiddleware, checkAuth);
 
 Route.route("/login").post(userLogin);
 
@@ -34,7 +34,11 @@ Route.route("/add-employee").post(
 
 Route.route("/forgotpassword").post(forgotPassword);
 
-Route.route("/update-user/:id").patch(authMiddleware, updateUser);
+Route.route("/update-user/:id").put(
+  uploadProfilePic.single("Profile"),
+  authMiddleware,
+  updateUser
+);
 
 Route.route("/delete-user/:id").delete(deleteUser);
 
