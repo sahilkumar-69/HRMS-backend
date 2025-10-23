@@ -4,10 +4,13 @@ import { userModel } from "../models/User.model.js";
 import uploadOnCloudinary, {
   deleteFromCloudinary,
 } from "../utils/Cloudinary.js";
+import { sendNotification } from "../utils/sendNotification.js";
 
 const addPolicy = async (req, res) => {
   const { Role, FirstName, LastName, _id: adminId } = req.user;
 
+  // console.log(req.body)
+  // console.log(req.body)
   let docs = {
     public_id: "",
     secure_url: "",
@@ -23,6 +26,7 @@ const addPolicy = async (req, res) => {
     }
 
     //  Upload policy file
+    console.log(req.file);
     if (req.file) {
       const uploads = await uploadOnCloudinary(req.file.path, "HRMS_POLICIES");
       if (!uploads.success) {
@@ -70,13 +74,13 @@ const addPolicy = async (req, res) => {
     }
     return res.status(500).json({
       success: false,
-      message: "Server error while adding policy",
-      error: error.message,
+      message: error.message,
+      error: error,
     });
   }
 };
 
- const updatePolicy = async (req, res) => {
+const updatePolicy = async (req, res) => {
   const { Role, FirstName, LastName, _id: adminId } = req.user;
 
   let docs = {
@@ -158,12 +162,12 @@ const addPolicy = async (req, res) => {
 
 const getPolicy = async (req, res) => {
   try {
-    const policy = await policies.find();
+    const policy = await policies.findOne();
 
-    if (!policy || policy.length === 0) {
+    if (!policy) {
       return res.status(404).json({
         success: false,
-        message: "No policies found",
+        message: "Policy not found",
       });
     }
 
@@ -175,8 +179,8 @@ const getPolicy = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: "Server error while fetching policies",
-      error: error.message,
+      message: error.message,
+      error,
     });
   }
 };
@@ -211,7 +215,7 @@ const deletePolicy = async (req, res) => {
     //  Delete from DB
     await policy.deleteOne();
 
-    // 🔔 Notify all users about deletion
+    //  Notify all users about deletion
     const allUsers = await userModel.find({}, "_id");
     const recipientIds = allUsers.map((u) => u._id.toString());
 

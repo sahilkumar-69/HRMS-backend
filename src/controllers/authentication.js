@@ -235,7 +235,7 @@ const userSignUp = async (req, res) => {
       Role,
       AllowedTabs,
       Password,
-      createdBy: req?.user?._id || null,
+      // createdBy: req?.user?._id || null,
       updatedBy: req?.user?._id || null,
     });
 
@@ -288,17 +288,27 @@ const userSignUp = async (req, res) => {
 
 const updateUser = async (req, res) => {
   try {
-    const updates = req.body; // fields to update (e.g. { address: {...} })
+    const updates = req.body;
+    const id = req.params.id;
+
+    // console.log("updates", id, updates);
+
+    const userToUpdate = await userModel.findById(id);
+
+    // console.log("usertoupdate", userToUpdate);
+    if (!userToUpdate) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
     // Ensure HR/Owner cannot update restricted fields
-    const restricted = ["Password", "Role", "Permissions"];
-    restricted.forEach((field) => {
-      if (updates[field]) delete updates[field];
-    });
+    // const restricted = ["Password", "Role", "Permissions"];
+    // restricted.forEach((field) => {
+    //   if (updates[field]) delete updates[field];
+    // });
 
     if (req.file && req.file.path) {
       const deleteCurrentPhoto = await deleteFromCloudinary(
-        req.user.Profile_Public_id
+        userToUpdate.Profile_Public_id
       );
 
       if (!deleteCurrentPhoto.success) {
@@ -314,11 +324,11 @@ const updateUser = async (req, res) => {
       }
 
       await userModel.findByIdAndUpdate(
-        req.user._id,
+        userToUpdate._id,
         {
           $set: {
-            Profile_url: updatedURL.response.public_id,
-            Profile_Public_id: updatedURL.response.secure_url,
+            Profile_url: updatedURL.response.secure_url,
+            Profile_Public_id: updatedURL.response.public_id,
           },
         },
         { new: true, runValidators: true }
@@ -327,8 +337,19 @@ const updateUser = async (req, res) => {
 
     const updatedUser = await userModel
       .findByIdAndUpdate(
-        req.user._id,
-        { $set: updates },
+        userToUpdate._id,
+        {
+          $set: {
+            ...updates,
+            Tasks: userToUpdate.Tasks,
+            Leaves: userToUpdate.Leaves,
+            PaymentHistory: userToUpdate.PaymentHistory,
+            JoinedTeams: userToUpdate.JoinedTeams,
+            Notifications: userToUpdate.Notifications,
+            updatedBy: req.user._id,
+            // createdBy: updates?.createdBy || null,
+          },
+        },
         { new: true, runValidators: true }
       )
       .select("-Password ");
@@ -339,9 +360,8 @@ const updateUser = async (req, res) => {
 
     res.json({ message: "User updated successfully", user: updatedUser });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error updating user", error: error.message });
+    console.log(error);
+    res.status(500).json({ message: error.message, error: error });
   }
 };
 
@@ -380,7 +400,10 @@ const getAllEmp = async (req, res) => {
     const Emps = await userModel
       .find()
       .select("-Password")
-      .populate("Tasks", "title dueDate assigner");
+      .populate("Tasks", "title dueDate assigner")
+      .populate("Leaves", "days leaveType reason status");
+    // .populate("JoinedTeams", "title dueDate assigner")
+    // .populate("Notifications", "title message isRead");
 
     const allEmployees = {
       HR: Emps.filter((emp) => emp.Role == "HR"),
@@ -388,6 +411,9 @@ const getAllEmp = async (req, res) => {
       TL: Emps.filter((emp) => emp.Role == "TL"),
       EMPLOYEE: Emps.filter((emp) => emp.Role == "EMPLOYEE"),
     };
+
+    // console.log(Emps);
+
     return res.status(200).json({
       message: "Emp fetched",
       success: true,
@@ -395,8 +421,9 @@ const getAllEmp = async (req, res) => {
       Emps,
     });
   } catch (error) {
-    res.json(500).json({
+    res.status(500).json({
       error,
+      success: false,
       message: error.message,
     });
   }

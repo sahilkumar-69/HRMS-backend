@@ -1,4 +1,3 @@
-// models/leaveModel.js
 import mongoose, { Schema } from "mongoose";
 
 const leaveSchema = new Schema(
