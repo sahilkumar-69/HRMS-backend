@@ -21,6 +21,7 @@ import path from "path";
 // import { authMiddleware } from "./src/middleware/authMiddleware.js";
 import { paymentRoutes } from "./src/routes/payment.routes.js";
 import expenseRoutes from "./src/routes/expense.routes.js";
+import { TicketRoutes } from "./src/routes/ticket.routes.js";
 
 const app = express();
 
@@ -78,6 +79,9 @@ app.use("/api", Route);
 
 // leave related routes
 app.use("/api/leave", leaveRoute);
+
+// leave related routes
+app.use("/api/ticket", TicketRoutes);
 
 // team related routes
 app.use("/api/team", TeamRoute);
