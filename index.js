@@ -1,3 +1,5 @@
+import { config } from "dotenv";
+config();
 import express from "express";
 import { createServer } from "http";
 import cors from "cors";
@@ -18,7 +20,6 @@ import { initiateServer } from "./src/utils/socketIO.js";
 import { salesRouter } from "./src/routes/sales.routes.js";
 import otpRouter from "./src/routes/otp.routes.js";
 import path from "path";
-// import { authMiddleware } from "./src/middleware/authMiddleware.js";
 import { paymentRoutes } from "./src/routes/payment.routes.js";
 import expenseRoutes from "./src/routes/expense.routes.js";
 import { TicketRoutes } from "./src/routes/ticket.routes.js";
@@ -119,9 +120,9 @@ app.use("/api/payment", paymentRoutes);
 
 app.use("/api/expense", expenseRoutes);
 
-server.listen(4343, async (err) => {
+server.listen(process.env.PORT || 4343, "0.0.0.0", async (err) => {
   if (err) return console.log("error while listning", err);
   dbConnect().then(() => {
-    console.log(`server is running on 4343`);
+    console.log(`server is running on ${process.env.PORT || 4343}`);
   });
 });
