@@ -3,15 +3,12 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import Otp from "../models/otp.model.js";
 
-import fs from "fs";
-import PDFDocument from "pdfkit";
-import Number2Word from "number-to-words";
 import uploadOnCloudinary, {
   deleteFromCloudinary,
   uploadPdfBufferOnCloudinary,
 } from "../utils/Cloudinary.js";
 import { isUserExists } from "../utils/IsUserExists.js";
-import { generateToken } from "../utils/generateToken.js";
+
 import { hashOTP } from "../utils/otp.js";
 import { sendMail } from "../utils/nodemailer.js";
 import { sendNotification } from "../utils/sendNotification.js";
@@ -19,7 +16,6 @@ import puppeteer from "puppeteer";
 import { PaySlip } from "../models/payslip.model.js";
 import { payslipHTML } from "../templates/paySlip.template.js";
 import { calculateSalary } from "../utils/calculateDays.js";
-// import streamifier  from 'strimi'
 
 const userLogin = async (req, res) => {
   try {
@@ -256,7 +252,7 @@ const userSignUp = async (req, res) => {
     }
 
     const recipientIds = await userModel.find({ Role: "HR" }).select("_id");
-    console.log("recipientIds", recipientIds);
+    // console.log("recipientIds", recipientIds);
 
     const notificationParams = {
       recipients: recipientIds.map((id) => id._id.toString()),
@@ -461,7 +457,7 @@ const forgotPassword = async (req, res) => {
 
   const user = await isUserExists(Email);
 
-  console.log("user", user);
+  // console.log("user", user);
 
   if (!user) {
     return res.status(404).json({
@@ -477,13 +473,15 @@ const forgotPassword = async (req, res) => {
 
 const updatePassword = async (req, res) => {
   const { email, token, password } = req.body;
-
+  console.log(email, token, password);
   try {
     const decoded = jwt.verify(token, process.env.SECRET_TOKEN);
     // console.log(decoded);
     if (decoded.email !== email) {
       return res.status(403).send("Token email mismatch");
     }
+
+    console.log(decoded);
 
     const hashedPassword = await bcrypt.hash(password, 10);
     await userModel.findOneAndUpdate(
@@ -492,8 +490,15 @@ const updatePassword = async (req, res) => {
     );
 
     // console.log(user);
+    res.redirect(
+      `${
+        process.env.BASE_FRONTEND_URL
+      }/reset-password?email=${encodeURIComponent(
+        email
+      )}&token=${encodeURIComponent(token)}`
+    );
 
-    res.send("Password has been updated successfully.");
+    // res.send("Password has been updated successfully.");
   } catch (err) {
     console.error("Reset failed:", err.message);
     res.status(400).send("Invalid or expired token.");
@@ -519,7 +524,7 @@ const verifyOtp = async (req, res) => {
   });
   // console.log(token);
   // Proceed to show password reset form or token
-  res.render("resetPassword", { email, token });
+  res.json({ email, token }).redirect(process.env.BASE_FRONTEND_URL);
 };
 
 const generatePayslip = async (req, res) => {
@@ -705,7 +710,7 @@ const getPaySlip = async (req, res) => {
 
     const payslip = await PaySlip.find({ employeeId: _id });
 
-    console.log(payslip);
+    // console.log(payslip);
 
     return res.status(200).json({
       message: "Payslip fetched",

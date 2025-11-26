@@ -24,7 +24,7 @@ const createTeam = async (req, res) => {
     await team.save();
 
     // Update each member's JoinedTeams
-    const teamMembers = await userModel.find({ _id: { $in: members } });  
+    const teamMembers = await userModel.find({ _id: { $in: members } });
     await Promise.all(
       teamMembers.map(async (member) => {
         member.JoinedTeams.push(team._id);
@@ -75,7 +75,7 @@ const getAllTeams = async (req, res) => {
 const getTeamsById = async (req, res) => {
   try {
     const { id } = req.params;
-    const user = req.user; // assuming auth middleware attaches user info (id, role)
+    const user = req.user;  
 
     let query = { _id: id };
 
