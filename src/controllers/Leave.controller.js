@@ -62,7 +62,7 @@ export const getAllLeaves = async (req, res) => {
   try {
     const { Role, _id } = req.user;
 
-    let leaves;
+    let leaves, Approved;
 
     if (Role === "HR" || Role === "ADMIN") {
       leaves = await Leave.find()
@@ -72,12 +72,14 @@ export const getAllLeaves = async (req, res) => {
       leaves = await Leave.find({ employee: _id })
         .populate("employee", "FirstName LastName Email Department")
         .sort({ createdAt: -1 });
+      Approved = leaves?.filter((leave) => leave.status === "Approved").length || 0;
     }
 
     return res.status(200).json({
       success: true,
       message: "Successfully fetched",
       leaves,
+      Approved,
     });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });
