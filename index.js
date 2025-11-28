@@ -31,15 +31,14 @@ const server = createServer(app);
 initiateServer(server);
 
 const allowedOrigins = [
-  "https://devnexus-hrms.vercel.app",
-  "https://hrms-devnexus-u6yd.vercel.app",
+  "https://www.hrmsbackend.palgharhome.com",
+  "http://hrmsbackend.palgharhome.com",
   "http://localhost:5173",
   "http://localhost:4343",
-  "https://hrms-backend-9qzj.onrender.com/api",
   "http://localhost:5174",
   "http://localhost:5175",
   "http://localhost:5176",
-  "http://localhost:5177",
+  "http://localhost:8909",
 ];
 
 app.use(

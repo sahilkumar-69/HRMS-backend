@@ -481,7 +481,7 @@ const updatePassword = async (req, res) => {
       return res.status(403).send("Token email mismatch");
     }
 
-    console.log(decoded);
+    // console.log(decoded);
 
     const hashedPassword = await bcrypt.hash(password, 10);
     await userModel.findOneAndUpdate(
@@ -490,13 +490,7 @@ const updatePassword = async (req, res) => {
     );
 
     // console.log(user);
-    res.redirect(
-      `${
-        process.env.BASE_FRONTEND_URL
-      }/reset-password?email=${encodeURIComponent(
-        email
-      )}&token=${encodeURIComponent(token)}`
-    );
+    res.redirect(process.env.BASE_FRONTEND_URL);
 
     // res.send("Password has been updated successfully.");
   } catch (err) {
@@ -524,7 +518,8 @@ const verifyOtp = async (req, res) => {
   });
   // console.log(token);
   // Proceed to show password reset form or token
-  res.json({ email, token }).redirect(process.env.BASE_FRONTEND_URL);
+  res.render("resetPassword", { email, token });
+  // res.json({ email, token }).redirect(process.env.BASE_FRONTEND_URL);
 };
 
 const generatePayslip = async (req, res) => {

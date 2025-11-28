@@ -26,7 +26,7 @@ const addPolicy = async (req, res) => {
     }
 
     //  Upload policy file
-    console.log(req.file);
+    // console.log(req.file);
     if (req.file) {
       const uploads = await uploadOnCloudinary(req.file.path, "HRMS_POLICIES");
       if (!uploads.success) {

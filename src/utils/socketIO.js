@@ -13,7 +13,7 @@ export const initiateServer = (server) => {
         "http://localhost:5173",
         "http://localhost:5174",
         "http://localhost:5175",
-        "https://devnexus-hrms.vercel.app",
+        "https://www.hrms.palgharhome.com",
       ],
       // methods: ["GET", "POST"],
       methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
@@ -24,7 +24,7 @@ export const initiateServer = (server) => {
   });
 
   io.on("connection", (socket) => {
-    console.log("connected to socket", socket.id);
+    // console.log("connected to socket", socket.id);
 
     socket.on("register", async ({ userId, Role }) => {
       const alreadyOnline = onlineUsers.has(userId);
@@ -39,7 +39,7 @@ export const initiateServer = (server) => {
       socket.join(userId);
       socket.join(Role);
 
-      console.log(`User ${userId} registered with ${socket.id}`);
+      // console.log(`User ${userId} registered with ${socket.id}`);
 
       // Only notify others if this is a *new online user*
       if (!alreadyOnline) {
@@ -72,7 +72,7 @@ export const initiateServer = (server) => {
         io.emit("userOffline", { userId });
       }
 
-      console.log("user disconnected", socket.id);
+      // console.log("user disconnected", socket.id);
     });
   });
 

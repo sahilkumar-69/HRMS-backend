@@ -1,7 +1,7 @@
 import "dotenv/config";
 import nodemailer from "nodemailer";
 import Otp from "../models/otp.model.js";
-import { generateOTP, hashOTP } from "./otp.js"
+import { generateOTP, hashOTP } from "./otp.js";
 
 const otp = generateOTP();
 const otpHash = hashOTP(otp);
@@ -19,7 +19,7 @@ const transporter = nodemailer.createTransport({
 let otp_entry;
 
 export const sendMail = async (to) => {
-  const resetLink = `http://localhost:434/api/reset-password/verify-otp?email=${to}&otp=${otp}`;
+  const resetLink = `${process.env.BASE_BACKEND_URL}api/reset-password/verify-otp?email=${to}&otp=${otp}`;
   try {
     otp_entry = await Otp.create({ email: to, otpHash });
 

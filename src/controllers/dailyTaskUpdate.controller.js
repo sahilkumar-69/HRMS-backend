@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { dailyUpdates } from "../models/dailyTaskUpdate.model.js";
 import { userModel } from "../models/User.model.js";
 import uploadOnCloudinary, {
@@ -94,5 +95,47 @@ export const getDailyTaskUpdates = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const deleteUpdate = async (req, res) => {
+  const id = req.params?.id;
+
+  if (!id) {
+    return res.status(400).json({
+      success: false,
+      message: "id param not found",
+    });
+  }
+
+  // Correct validation
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({
+      success: false,
+      message: "invalid id",
+    });
+  }
+
+  try {
+    const deleted = await dailyUpdates.findByIdAndDelete(id);
+
+    if (!deleted) {
+      return res.status(404).json({
+        success: false,
+        message: "update not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Update deleted",
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+      error,
+    });
   }
 };
