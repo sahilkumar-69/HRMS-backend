@@ -31,8 +31,14 @@ const server = createServer(app);
 initiateServer(server);
 
 const allowedOrigins = [
+  "http://www.hrmsbackend.palgharhome.com",
   "https://www.hrmsbackend.palgharhome.com",
+  "http://hrms.palgharhome.com",
+  "https://hrms.palgharhome.com",
+  "http://www.hrms.palgharhome.com",
+  "https://www.hrms.palgharhome.com",
   "http://hrmsbackend.palgharhome.com",
+  "https://hrmsbackend.palgharhome.com",
   "http://localhost:5173",
   "http://localhost:4343",
   "http://localhost:5174",
@@ -41,24 +47,26 @@ const allowedOrigins = [
   "http://localhost:8909",
 ];
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // Allow requests with no origin (like Postman or curl)
-      if (!origin) return callback(null, true);
+// app.use(
+//   cors({
+//     origin: function (origin, callback) {
+//       // Allow requests with no origin (like Postman or curl)
+//       if (!origin) return callback(null, true);
 
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      } else {
-        return callback(new Error("Not allowed by CORS"));
-      }
-    },
+//       if (allowedOrigins.includes(origin)) {
+//         return callback(null, true);
+//       } else {
+//         return callback(new Error("Not allowed by CORS"));
+//       }
+//     },
 
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "token"],
-    credentials: true,
-  })
-);
+//     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+//     allowedHeaders: ["Content-Type", "Authorization", "token"],
+//     credentials: true,
+//   })
+// );
+
+app.use(cors());
 
 app.set("view engine", "ejs");
 

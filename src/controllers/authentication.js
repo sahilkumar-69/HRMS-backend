@@ -284,80 +284,109 @@ const userSignUp = async (req, res) => {
 
 const updateUser = async (req, res) => {
   try {
-    const updates = req.body;
     const id = req.params.id;
 
-    // console.log("updates", id, updates);
-
-    const userToUpdate = await userModel.findById(id);
-
-    // console.log("usertoupdate", userToUpdate);
-    if (!userToUpdate) {
-      return res.status(404).json({ message: "User not found" });
+    const user = await userModel.findById(id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
     }
 
-    // Ensure HR/Owner cannot update restricted fields
-    // const restricted = ["Password", "Role", "Permissions"];
-    // restricted.forEach((field) => {
-    //   if (updates[field]) delete updates[field];
-    // });
+    const body = req.body; // text fields (strings)
+    const updates = {};
 
-    if (req.file && req.file.path) {
-      const deleteCurrentPhoto = await deleteFromCloudinary(
-        userToUpdate.Profile_Public_id
-      );
+    // Allowed fields ONLY (prevent unauthorized changes)
+    const allowedFields = [
+      "FirstName",
+      "LastName",
+      "Email",
+      "Phone",
+      "Gender",
+      "Dob",
+      "Department",
+      "Designation",
+      "AadharNumber",
+      "PanNumber",
+      "CurrentAddress",
+      "PermanentAddress",
+      "EmergencyName",
+      "EmergencyRelation",
+      "EmergencyPhone",
+      "Role",
+    ];
 
-      if (!deleteCurrentPhoto.success) {
+    allowedFields.forEach((key) => {
+      if (body[key] !== undefined) {
+        updates[key] = body[key];
+      }
+    });
+
+    // Rebuild BankDetails (frontend sends flat form fields)
+    updates.BankDetails = {
+      BankName: body.BankName,
+      AccountNumber: body.AccountNumber,
+      IFSC: body.IFSC,
+      Branch: body.Branch,
+    };
+
+    // Handle Profile Image if uploaded
+    if (req.file) {
+      try {
+        // Delete old photo if exists
+        if (user.Profile_Public_id) {
+          await deleteFromCloudinary(user.Profile_Public_id);
+        }
+
+        // Upload new photo
+        const uploaded = await uploadOnCloudinary(req.file.path);
+
+        if (!uploaded.success) {
+          return res.status(400).json({
+            success: false,
+            message: uploaded.message,
+          });
+        }
+
+        updates.Profile_url = uploaded.response.secure_url;
+        updates.Profile_Public_id = uploaded.response.public_id;
+      } catch (err) {
         return res.status(500).json({
-          message: deleteCurrentPhoto.message,
+          success: false,
+          message: "Failed to update profile image",
+          error: err.message,
         });
       }
-
-      const updatedURL = await uploadOnCloudinary(req.file.path);
-
-      if (!updatedURL.success) {
-        return res.status(404).json({ message: updatedURL.message });
-      }
-
-      await userModel.findByIdAndUpdate(
-        userToUpdate._id,
-        {
-          $set: {
-            Profile_url: updatedURL.response.secure_url,
-            Profile_Public_id: updatedURL.response.public_id,
-          },
-        },
-        { new: true, runValidators: true }
-      );
     }
 
+    // Preserve relational + restricted fields (DO NOT let frontend overwrite)
+    updates.Tasks = user.Tasks;
+    updates.Leaves = user.Leaves;
+    updates.JoinedTeams = user.JoinedTeams;
+    updates.PaymentHistory = user.PaymentHistory;
+    updates.Notifications = user.Notifications;
+    updates.AllowedTabs = user.AllowedTabs;
+
+    updates.updatedBy = req.user._id;
+
+    // Final PATCH update
     const updatedUser = await userModel
-      .findByIdAndUpdate(
-        userToUpdate._id,
-        {
-          $set: {
-            ...updates,
-            Tasks: userToUpdate.Tasks,
-            Leaves: userToUpdate.Leaves,
-            PaymentHistory: userToUpdate.PaymentHistory,
-            JoinedTeams: userToUpdate.JoinedTeams,
-            Notifications: userToUpdate.Notifications,
-            updatedBy: req.user._id,
-            // createdBy: updates?.createdBy || null,
-          },
-        },
-        { new: true, runValidators: true }
-      )
-      .select("-Password ");
+      .findByIdAndUpdate(id, { $set: updates }, { new: true })
+      .select("-Password");
 
-    if (!updatedUser) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    res.json({ message: "User updated successfully", user: updatedUser });
+    return res.status(200).json({
+      success: true,
+      message: "User updated successfully",
+      user: updatedUser,
+    });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: error.message, error: error });
+    console.error("Update Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
   }
 };
 

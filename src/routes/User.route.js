@@ -34,7 +34,7 @@ Route.route("/add-employee").post(
 
 Route.route("/forgotpassword").post(forgotPassword);
 
-Route.route("/update-user/:id").put(
+Route.route("/update-user/:id").patch(
   uploadProfilePic.single("Profile"),
   authMiddleware,
   updateUser

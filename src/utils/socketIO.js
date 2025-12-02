@@ -9,12 +9,16 @@ let onlineUsers = new Map();
 export const initiateServer = (server) => {
   io = new Server(server, {
     cors: {
-      origin: [
-        "http://localhost:5173",
-        "http://localhost:5174",
-        "http://localhost:5175",
-        "https://www.hrms.palgharhome.com",
-      ],
+      origin: "*",
+      //  [
+      //   "http://localhost:5173",
+      //   "http://localhost:5174",
+      //   "http://localhost:5175",
+      //   "http://hrms.palgharhome.com",
+      //   "https://hrms.palgharhome.com",
+      //   "http://www.hrms.palgharhome.com",
+      //   "https://www.hrms.palgharhome.com",
+      // ],
       // methods: ["GET", "POST"],
       methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
 

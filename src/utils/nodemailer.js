@@ -19,7 +19,7 @@ const transporter = nodemailer.createTransport({
 let otp_entry;
 
 export const sendMail = async (to) => {
-  const resetLink = `${process.env.BASE_BACKEND_URL}api/reset-password/verify-otp?email=${to}&otp=${otp}`;
+  const resetLink = `${process.env.BASE_BACKEND_URL}/api/reset-password/verify-otp?email=${to}&otp=${otp}`;
   try {
     otp_entry = await Otp.create({ email: to, otpHash });
 

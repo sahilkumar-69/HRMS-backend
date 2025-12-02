@@ -1,14 +1,15 @@
 import teamModel from "../models/team.model.js";
 import { userModel } from "../models/User.model.js";
 import { sendNotification } from "../utils/sendNotification.js";
+
 // Create a new team
 const createTeam = async (req, res) => {
   try {
-    const { FirstName, LastName } = req.user;
-    const { name, description, lead, members } = req.body;
+    const { FirstName, LastName, _id } = req.user;
+    const { name, description, members } = req.body;
 
     // Validate lead exists
-    const leadUser = await userModel.findById(lead);
+    const leadUser = await userModel.findById(_id);
     if (!leadUser || leadUser.Role !== "TL") {
       return res.status(400).json({ message: "Invalid team lead" });
     }
@@ -17,7 +18,7 @@ const createTeam = async (req, res) => {
     const team = new teamModel({
       name,
       description,
-      lead,
+      lead: _id,
       members,
       createdBy: req.user._id, // HR or Owner
     });
@@ -56,31 +57,46 @@ const createTeam = async (req, res) => {
       .json({ message: "Error creating team", error: error.message });
   }
 };
-// Get teams (with members)
+
 const getAllTeams = async (req, res) => {
   try {
+    const { _id, Role } = req.user;
+
+    let query = {};
+
+    // If HR or EMPLOYEE → return only teams where they are members
+    if (Role === "HR" || Role === "EMPLOYEE") {
+      query = { members: _id };
+    }
+
     const teams = await teamModel
-      .find()
+      .find(query)
       .populate("lead", "FirstName LastName Email Role")
       .populate("members", "FirstName LastName Email Role");
 
-    res.status(201).json({ Success: true, teams });
+    return res.status(200).json({
+      success: true,
+      count: teams.length,
+      teams,
+    });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error fetching teams", error: error.message });
+    return res.status(500).json({
+      success: false,
+      message: "Error fetching teams",
+      error: error.message,
+    });
   }
 };
 
 const getTeamsById = async (req, res) => {
   try {
     const { id } = req.params;
-    const user = req.user;  
+    const user = req.user;
 
     let query = { _id: id };
 
     //   Restrict Employees & TLs to only their teams
-    if (user.Role === "EMPLOYEE" || user.Role === "TL") {
+    if (user.Role === "EMPLOYEE" || user.Role === "HR") {
       query = {
         _id: id,
         $or: [
@@ -109,54 +125,11 @@ const getTeamsById = async (req, res) => {
   }
 };
 
-const getJoinedTeams = async (req, res) => {
-  try {
-    const { Role } = req.user;
-
-    const { id } = req.params;
-
-    // if (user.Role === "TL") {
-    // }
-
-    if (!id) {
-      res.json({
-        message: "param not found",
-        success: false,
-      });
-    }
-
-    const teams = await teamModel
-      .find({
-        $or: [
-          {
-            lead: id,
-          },
-          {
-            members: id,
-          },
-        ],
-      }) // checks if userId exists in array
-      // .find({ members: id }) // checks if userId exists in array
-      .populate("lead", "FirstName LastName Email") // populate lead details
-      .populate("members", "FirstName LastName Email"); // optional: populate members
-
-    res.json({
-      success: true,
-      count: teams.length,
-      teams,
-    });
-  } catch (error) {
-    res.json({
-      message: error.message,
-      success: false,
-    });
-  }
-};
-
 const updateTeam = async (req, res) => {
   try {
     const { id } = req.params;
     const updates = req.body;
+    const { _id: lead } = req.user;
 
     let team = await teamModel.findById(id);
 
@@ -165,11 +138,12 @@ const updateTeam = async (req, res) => {
     }
 
     //  validate lead
-    if (updates.lead) {
-      const leadExists = await userModel.findById(updates.lead);
-      if (!leadExists) {
-        return res.status(400).json({ message: "Invalid lead userId" });
-      }
+    let leadExists = null;
+    if (lead) {
+      leadExists = await userModel.findById(lead);
+    }
+    if (!leadExists) {
+      return res.status(400).json({ message: "Invalid lead userId" });
     }
 
     //  validate members
@@ -194,7 +168,7 @@ const updateTeam = async (req, res) => {
 
     //  prepare notification
     const notificationParams = {
-      recipient: team.members.map((m) => m._id.toString()), // notify all members
+      recipients: team?.members?.map((m) => m._id.toString()), // notify all members
       message: `Team "${team.name}" has been updated.`,
       title: "Team Update",
       data: {
@@ -385,7 +359,6 @@ export {
   updateTeam,
   getAllTeams,
   getTeamsById,
-  getJoinedTeams,
   addMembers,
   removeMembers,
   deleteTeam,

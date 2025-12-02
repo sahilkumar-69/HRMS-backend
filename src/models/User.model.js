@@ -53,7 +53,7 @@ const userSchema = new mongoose.Schema(
 
     PermanentAddress: { type: String, require: true },
 
-    Salary: { type: Number, default: 0 },
+    // Salary: { type: String, default: 0 },
 
     AllowedTabs: [{ type: String }],
 
