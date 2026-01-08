@@ -426,7 +426,10 @@ const getAllEmp = async (req, res) => {
       .find()
       .select("-Password")
       .populate("Tasks", "title dueDate assigner")
-      .populate("Leaves", "days leaveType reason status");
+      .populate(
+        "Leaves",
+        "days leaveType reason status createdAt updatedAt from to"
+      );
     // .populate("JoinedTeams", "title dueDate assigner")
     // .populate("Notifications", "title message isRead");
 
@@ -760,19 +763,12 @@ const deletePaySlip = async (req, res) => {
 };
 
 const checkAuth = async (req, res) => {
-  if (req?.user) {
-    return res.status(200).json({
-      success: true,
-      message: "User authenticated",
-      accessToken: req.user.generateAccessToken(),
-      user: req.user,
-    });
-  } else {
-    return res.status(401).json({
-      success: false,
-      message: "Invalide token",
-    });
-  }
+  return res.status(200).json({
+    success: true,
+    message: "User authenticated",
+    accessToken: req.user.generateAccessToken(),
+    user: req.user,
+  });
 };
 
 export {

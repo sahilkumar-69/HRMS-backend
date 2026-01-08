@@ -1,20 +1,20 @@
 // import { response } from "express";
 import { policies } from "../models/policy.model.js";
 import { userModel } from "../models/User.model.js";
-import uploadOnCloudinary, {
-  deleteFromCloudinary,
-} from "../utils/Cloudinary.js";
+
 import { sendNotification } from "../utils/sendNotification.js";
 
 const addPolicy = async (req, res) => {
   const { Role, FirstName, LastName, _id: adminId } = req.user;
+  const { policy: newPolicy } = req.body;
+  console.log("editor data", newPolicy);
 
-  // console.log(req.body)
-  // console.log(req.body)
-  let docs = {
-    public_id: "",
-    secure_url: "",
-  };
+  if (!newPolicy) {
+    return res.status(400).json({
+      success: false,
+      message: "Policy content is required",
+    });
+  }
 
   try {
     //  Role-based access
@@ -25,27 +25,10 @@ const addPolicy = async (req, res) => {
       });
     }
 
-    //  Upload policy file
-    // console.log(req.file);
-    if (req.file) {
-      const uploads = await uploadOnCloudinary(req.file.path, "HRMS_POLICIES");
-      if (!uploads.success) {
-        return res.status(400).json({
-          success: false,
-          message: uploads.message || "File upload failed",
-        });
-      }
-      docs.public_id = uploads.response.public_id;
-      docs.secure_url = uploads.response.secure_url;
-    } else {
-      return res.status(404).json({
-        success: false,
-        message: "No policy file provided",
-      });
-    }
-
     //  Save to DB
-    const policy = await policies.create(docs);
+    const policy = await policies.create({ policies: newPolicy });
+
+    console.log("policy_model", policy);
 
     // Notify all HR & employees
     const allUsers = await userModel.find({}, "_id");
@@ -57,7 +40,7 @@ const addPolicy = async (req, res) => {
       message: `A new company policy has been added by ${FirstName} ${LastName}. Please review the latest document.`,
       data: {
         policyId: policy._id,
-        secure_url: docs.secure_url,
+
         uploadedBy: adminId,
       },
     });
@@ -68,10 +51,6 @@ const addPolicy = async (req, res) => {
       policy,
     });
   } catch (error) {
-    // Cleanup Cloudinary file if DB save fails
-    if (docs.public_id) {
-      await deleteFromCloudinary(docs.public_id);
-    }
     return res.status(500).json({
       success: false,
       message: error.message,
@@ -83,10 +62,14 @@ const addPolicy = async (req, res) => {
 const updatePolicy = async (req, res) => {
   const { Role, FirstName, LastName, _id: adminId } = req.user;
 
-  let docs = {
-    public_id: "",
-    secure_url: "",
-  };
+  const { policy: updatedPolicy, id } = req.body;
+
+  if (!updatedPolicy) {
+    return res.status(400).json({
+      success: false,
+      message: "Policy content is required",
+    });
+  }
 
   try {
     //  Role-based access
@@ -97,35 +80,12 @@ const updatePolicy = async (req, res) => {
       });
     }
 
-    //  Upload new file if provided
-    if (req.file) {
-      const uploads = await uploadOnCloudinary(req.file.path, "HRMS_POLICIES");
-      if (!uploads.success) {
-        return res
-          .status(400)
-          .json({ success: false, message: uploads.message });
-      }
-      docs.public_id = uploads.response.public_id;
-      docs.secure_url = uploads.response.secure_url;
-    }
-
     //  Find existing policy
-    let policy = await policies.findOne();
-
-    if (policy) {
-      // Delete old file if new file uploaded
-      if (docs.public_id && policy.public_id) {
-        await deleteFromCloudinary(policy.public_id);
-      }
-
-      if (docs.public_id) policy.public_id = docs.public_id;
-      if (docs.secure_url) policy.secure_url = docs.secure_url;
-
-      await policy.save();
-    } else {
-      // Create new if none exists
-      policy = await policies.create(docs);
-    }
+    let policy = await policies.findByIdAndUpdate(
+      { _id: id },
+      { policies: updatedPolicy },
+      { new: true }
+    );
 
     //  Send notification to all users
     const allUsers = await userModel.find({}, "_id");
@@ -148,10 +108,6 @@ const updatePolicy = async (req, res) => {
       policy,
     });
   } catch (error) {
-    // Rollback if DB fails
-    if (docs.public_id) {
-      await deleteFromCloudinary(docs.public_id);
-    }
     return res.status(500).json({
       success: false,
       message: "Error updating policy",
@@ -165,7 +121,7 @@ const getPolicy = async (req, res) => {
     const policy = await policies.findOne();
 
     if (!policy) {
-      return res.status(404).json({
+      return res.status(200).json({
         success: false,
         message: "Policy not found",
       });
@@ -189,6 +145,8 @@ const deletePolicy = async (req, res) => {
   const { Role, FirstName, LastName, _id: adminId } = req.user;
   const { id } = req.params;
 
+  console.log(id);
+
   try {
     //  Role check
     if (Role !== "ADMIN") {
@@ -199,21 +157,14 @@ const deletePolicy = async (req, res) => {
     }
 
     //  Find policy
-    const policy = await policies.findById(id);
+    const policy = await policies.findByIdAndDelete(id);
+
     if (!policy) {
       return res.status(404).json({
         success: false,
         message: "Policy not found",
       });
     }
-
-    //  Delete file from Cloudinary if exists
-    if (policy.public_id) {
-      await deleteFromCloudinary(policy.public_id);
-    }
-
-    //  Delete from DB
-    await policy.deleteOne();
 
     //  Notify all users about deletion
     const allUsers = await userModel.find({}, "_id");
@@ -236,8 +187,8 @@ const deletePolicy = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: "Server error while deleting policy",
-      error: error.message,
+      message: error.message,
+      error: error,
     });
   }
 };

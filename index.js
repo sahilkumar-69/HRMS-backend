@@ -23,6 +23,9 @@ import path from "path";
 import { paymentRoutes } from "./src/routes/payment.routes.js";
 import expenseRoutes from "./src/routes/expense.routes.js";
 import { TicketRoutes } from "./src/routes/ticket.routes.js";
+import "./src/utils/cronScheduler.js";
+import { holidayRouter } from "./src/routes/holiday.routes.js";
+import { authMiddleware } from "./src/middleware/authMiddleware.js";
 
 const app = express();
 
@@ -72,7 +75,7 @@ app.set("view engine", "ejs");
 
 app.set("views", path.join(path.resolve(), "/src/views"));
 
-app.use(express.json());
+app.use(express.json({ limit: "15mb" }));
 
 app.use(bodyParser.json());
 
@@ -84,6 +87,9 @@ app.get("/", (req, res) => {
 
 // User related routes
 app.use("/api", Route);
+
+// Holiday related routes
+app.use("/api/holiday", authMiddleware, holidayRouter);
 
 // leave related routes
 app.use("/api/leave", leaveRoute);

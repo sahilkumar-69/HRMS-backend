@@ -5,7 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "node index.js "
+    "start": "nodemon index.js "
   },
   "author": "SAHIL",
   "license": "ISC",
@@ -20,6 +20,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.17.1",
     "multer": "^2.0.2",
+    "node-cron": "^4.2.1",
     "nodemailer": "^7.0.6",
     "nodemon": "^3.1.10",
     "number-to-words": "^1.2.4",

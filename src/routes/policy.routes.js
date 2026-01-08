@@ -10,19 +10,9 @@ import { upload } from "../middleware/upload.js";
 
 const policyRouter = express.Router();
 
-policyRouter.post(
-  "/add-policy",
-  upload.single("pdfUrl"),
-  authMiddleware,
-  addPolicy
-);
+policyRouter.post("/add-policy", authMiddleware, addPolicy);
 
-policyRouter.put(
-  "/update-policy",
-  upload.single("pdfUrl"),
-  authMiddleware,
-  updatePolicy
-);
+policyRouter.put("/update-policy", authMiddleware, updatePolicy);
 
 policyRouter.get("/get-policy", getPolicy);
 

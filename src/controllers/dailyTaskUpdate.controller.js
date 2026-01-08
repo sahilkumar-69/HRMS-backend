@@ -41,12 +41,13 @@ export const addDailyUpdate = async (req, res) => {
         .select("FirstName LastName Role Department");
     }
 
-    // ✅ Notify ADMIN & HR about the new daily update
+    // Notify ADMIN & HR about the new daily update
     const adminHrUsers = await userModel.find(
       { Role: { $in: ["ADMIN", "HR"] } },
       "_id"
     );
-    const recipientIds = adminHrUsers.map((u) => u._id);
+
+    const recipientIds = adminHrUsers.map((u) => u._id !== req.user._id);
 
     await sendNotification({
       recipients: recipientIds,
