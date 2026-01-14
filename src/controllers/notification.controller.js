@@ -37,14 +37,26 @@ export const createNotification = async (req, res) => {
  */
 export const getMyNotifications = async (req, res) => {
   try {
-    const notifications = await Notification.find({
-      recipient: req.user._id,
-    }).sort({ createdAt: -1 });
-    // .populate("sender", "FirstName LastName Email Role");
+    const userId = req.user._id;
 
-    return res.json({
+    // pagination params
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const limit = Math.min(parseInt(req.query.limit) || 10, 50);
+    const skip = (page - 1) * limit;
+
+    const [notifications, totalCount] = await Promise.all([
+      Notification.find({ recipient: userId })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      Notification.countDocuments({ recipient: userId }),
+    ]);
+
+    return res.status(200).json({
       success: true,
       notifications,
+      hasMore: skip + notifications.length < totalCount,
+      page,
     });
   } catch (error) {
     return res.status(500).json({

@@ -42,6 +42,7 @@ const createTeam = async (req, res) => {
         teamId: team._id,
         teamLead: `${leadUser.FirstName} ${leadUser.LastName}`,
       },
+      type: "Personal",
     });
 
     return res

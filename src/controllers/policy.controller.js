@@ -43,6 +43,7 @@ const addPolicy = async (req, res) => {
 
         uploadedBy: adminId,
       },
+      type: "General",
     });
 
     return res.status(201).json({
@@ -100,6 +101,7 @@ const updatePolicy = async (req, res) => {
         secure_url: policy.secure_url,
         updatedBy: adminId,
       },
+      type: "General",
     });
 
     return res.json({
@@ -178,6 +180,7 @@ const deletePolicy = async (req, res) => {
         deletedPolicyId: id,
         deletedBy: adminId,
       },
+      type: "General",
     });
 
     return res.status(200).json({

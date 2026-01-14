@@ -6,6 +6,7 @@ import {
   forgotPassword,
   generatePayslip,
   getAllEmp,
+  getDashboardStats,
   getPaySlip,
   getUserById,
   updatePaySlip,
@@ -53,5 +54,7 @@ Route.route("/getAllSlips").get(authMiddleware, getPaySlip);
 Route.route("/update-slip").put(authMiddleware, updatePaySlip);
 
 Route.route("/delete-slip").delete(authMiddleware, deletePaySlip);
+
+Route.route("/stats").get(authMiddleware, getDashboardStats);
 
 export { Route };

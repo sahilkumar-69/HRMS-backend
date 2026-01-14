@@ -54,6 +54,7 @@ export const addDailyUpdate = async (req, res) => {
       title: "New Daily Update",
       message: `${newUpdate.employee.FirstName} ${newUpdate.employee.LastName} posted a new daily update: "${title}".`,
       data: { updateId: newUpdate._id },
+      type: "General",
     });
 
     res.status(201).json({

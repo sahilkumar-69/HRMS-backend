@@ -51,6 +51,7 @@ const checkIn = async (req, res) => {
       title: `You Checked-In at ${checkInTime}`,
       message: `${user.FirstName} ${user.LastName} checked in on ${today} with status: ${status}.`,
       data: { attendanceId: record._id, userId: user._id },
+      type: "Personal",
     });
 
     res.status(201).json({

@@ -45,6 +45,7 @@ export const createExpense = async (req, res) => {
       title: "New Expense Created",
       message: `A new expense "${title}" of amount ${amount} was created by ${FirstName} ${LastName}.`,
       data: { expenseId: newExpense._id },
+      type: "General",
     });
 
     return res.status(201).json({
@@ -107,6 +108,7 @@ export const updateExpense = async (req, res) => {
       title: "Expense Updated",
       message: `Expense "${updatedExpense.title}" was updated by ${FirstName} ${LastName}.`,
       data: { expenseId: updatedExpense._id },
+      type: "General",
     });
 
     return res.json({
@@ -165,6 +167,7 @@ export const deleteExpense = async (req, res) => {
       title: "Expense Deleted",
       message: `Expense "${exp.title}" was deleted by ${FirstName} ${LastName}.`,
       data: { expenseId: id },
+      type: "General",
     });
 
     return res.json({

@@ -6,7 +6,7 @@ import taskModel from "../models/task.model.js";
 import { sendNotification } from "./sendNotification.js";
 
 // Schedule a cron job to run at midnight on the first day of every week
-// cron.schedule("* * * * *",
+// cron.schedule("* * * * *"
 const notify = async () => {
   try {
     // console.log("Running monthly leave reset cron job...");
@@ -33,6 +33,7 @@ const notify = async () => {
       title: "Pending tasks",
       message: `You have some pending tasks`,
       data: "",
+      type: "Personal",
     };
 
     await sendNotification(notificationParams);

@@ -1,3 +1,4 @@
+import { isValidObjectId } from "mongoose";
 import Task from "../models/task.model.js";
 import { userModel as User } from "../models/User.model.js";
 import uploadOnCloudinary, {
@@ -92,6 +93,7 @@ const createTask = async (req, res) => {
         priority: task.priority,
         dueDate: task.dueDate,
       },
+      type: "Personal",
     });
 
     return res.status(201).json({
@@ -139,8 +141,28 @@ const getTasks = async (req, res) => {
       .json({ message: "Error fetching tasks", error: error.message });
   }
 };
+const getTaskById = async (req, res) => {
+  const { id } = req.params;
+  try {
+    if (!isValidObjectId(id)) {
+      throw new Error("Invalid task id");
+    }
 
-const deleteTasks = async (req, res) => {
+    // HR, TL, Owner can see all tasks
+    const tasks = await Task.findById(id)
+      .populate("assignee", "FirstName LastName Email Role")
+      .populate("assigner", "FirstName LastName Email Role");
+    // .populate("assigner", "FirstName LastName Email Role")
+
+    return res.json({ data: tasks, success: false });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: error.message, success: false, error: error.message });
+  }
+};
+
+const deleteTask = async (req, res) => {
   const { id } = req.params;
 
   try {
@@ -156,6 +178,8 @@ const deleteTasks = async (req, res) => {
       });
     }
 
+    // await User.updateOne({id:})
+
     //  Notify all assignees that their task was deleted
     if (deletedTask.assignee && deletedTask.assignee.length > 0) {
       await sendNotification({
@@ -163,6 +187,7 @@ const deleteTasks = async (req, res) => {
         title: "Task Deleted",
         message: `The task "${deletedTask.title}" has been deleted by the manager.`,
         data: { taskId: deletedTask._id },
+        type: "Personal",
       });
     }
 
@@ -183,6 +208,10 @@ const updateTask = async (req, res) => {
   try {
     const { id } = req.params;
     const updates = req.body;
+
+    if (!isValidObjectId(id)) {
+      throw new Error("Invalid task id ");
+    }
 
     //  Check if task exists
     const task = await Task.findById(id);
@@ -230,6 +259,7 @@ const updateTask = async (req, res) => {
         title: "Task Updated",
         message: `The task "${updatedTask.title}" has been updated.`,
         data: { taskId: updatedTask._id },
+        type: "Personal",
       });
     }
 
@@ -284,6 +314,7 @@ const assignTask = async (taskId, to) => {
       title: "New Task Assigned",
       message: `You have been assigned a new task.`,
       data: { taskId },
+      type: "Personal",
     });
 
     return updatedUser;
@@ -295,7 +326,8 @@ const assignTask = async (taskId, to) => {
 export {
   createTask,
   getTasks,
-  deleteTasks,
+  deleteTask,
+  getTaskById,
   updateTask,
   getEmployeeTasks,
   assignTask,

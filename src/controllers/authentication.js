@@ -16,6 +16,9 @@ import puppeteer from "puppeteer";
 import { PaySlip } from "../models/payslip.model.js";
 import { payslipHTML } from "../templates/paySlip.template.js";
 import { calculateSalary } from "../utils/calculateDays.js";
+import leaveModel from "../models/leave.model.js";
+import teamModel from "../models/team.model.js";
+import taskModel from "../models/task.model.js";
 
 const userLogin = async (req, res) => {
   try {
@@ -259,6 +262,7 @@ const userSignUp = async (req, res) => {
       title: "New Employee joined",
       message: `New Employee named ${savedUser.FirstName} ${savedUser.LastName} joined as ${savedUser.Designation}`,
       data: "",
+      type: "Personal",
     };
 
     await sendNotification(notificationParams);
@@ -685,6 +689,7 @@ const generatePayslip = async (req, res) => {
       title: "New Payslip Generated",
       message: `Your payslip for ${dataForTemplate.month} is now available.`,
       data: "",
+      type: "Personal",
     });
 
     res.status(200).json({
@@ -771,12 +776,71 @@ const checkAuth = async (req, res) => {
   });
 };
 
+const getDashboardStats = async (req, res) => {
+  const { Role, _id } = req.user;
+  let stats = {};
+  try {
+    if (Role === "ADMIN") {
+      const [leave_data, task_data, team_data] = await Promise.all([
+        leaveModel.countDocuments({ status: "Pending" }),
+        taskModel
+          .countDocuments({ status: "" })
+          .countDocuments({ status: "" })
+          .countDocuments({ status: "" }),
+        teamModel.countDocuments(),
+      ]);
+
+      stats = {
+        leave: leave_data,
+        task: task_data,
+        team: team_data,
+      };
+    } else if (Role === "TL" || Role === "HR") {
+      const [leave_data, task_data, team_data] = await Promise.all([
+        leaveModel.countDocuments({ employee: _id, status: "Approved" }),
+        taskModel.countDocuments(),
+        teamModel.countDocuments(),
+      ]);
+
+      stats = {
+        leave: leave_data,
+        task: task_data,
+        team: team_data,
+      };
+    } else {
+      const [leave_data, task_data, team_data] = await Promise.all([
+        leaveModel.countDocuments({ employee: _id, status: "Approved" }),
+        taskModel.countDocuments({ assignee: _id }),
+        teamModel.countDocuments({ members: _id }),
+      ]);
+
+      stats = {
+        leave: leave_data,
+        task: task_data,
+        team: team_data,
+      };
+    }
+
+    res.status(200).json({
+      success: true,
+      data: stats,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+      error,
+    });
+  }
+};
+
 export {
   userLogin,
   userSignUp,
   updateUser,
   deleteUser,
   getUserById,
+  getDashboardStats,
   getPaySlip,
   deletePaySlip,
   updatePaySlip,

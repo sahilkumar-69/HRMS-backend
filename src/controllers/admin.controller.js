@@ -31,6 +31,7 @@ export const givePolicyEditPermissionToHr = async (req, res) => {
       title: "Policy Edit Permission Granted",
       message: `You have been granted permission to edit company policies by ${FirstName} ${LastName}.`,
       data: { permission: "EDIT_POLICY" },
+      type: "Personal",
     });
 
     return res.json({
@@ -77,6 +78,7 @@ export const removePolicyPermissionFromHr = async (req, res) => {
       title: "Policy Edit Permission Removed",
       message: `Your permission to edit company policies has been revoked by ${FirstName} ${LastName}.`,
       data: { permission: "EDIT_POLICY" },
+      type: "Personal",
     });
 
     return res.json({
