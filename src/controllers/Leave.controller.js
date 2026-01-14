@@ -45,6 +45,7 @@ export const createLeave = async (req, res) => {
       title: "New Leave Request",
       message: `${req.user.FirstName} ${req.user.LastName} applied for ${leaveType} leave.`,
       data: { leaveId: leave._id },
+      type: "Personal",
     });
 
     return res.status(201).json({
@@ -62,7 +63,7 @@ export const getAllLeaves = async (req, res) => {
   try {
     const { Role, _id } = req.user;
 
-    let leaves;
+    let leaves, Approved;
 
     if (Role === "HR" || Role === "ADMIN") {
       leaves = await Leave.find()
@@ -72,12 +73,15 @@ export const getAllLeaves = async (req, res) => {
       leaves = await Leave.find({ employee: _id })
         .populate("employee", "FirstName LastName Email Department")
         .sort({ createdAt: -1 });
+      Approved =
+        leaves?.filter((leave) => leave.status === "Approved").length || 0;
     }
 
     return res.status(200).json({
       success: true,
       message: "Successfully fetched",
       leaves,
+      Approved,
     });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });
@@ -144,6 +148,7 @@ export const cancelRequest = async (req, res) => {
       title: "Leave Request Cancelled",
       message: `${leave.employee.FirstName} ${leave.employee.LastName} cancelled their ${leave.leaveType} leave request.`,
       data: { leaveId: leave._id },
+      type: "Personal",
     });
 
     return res.json({
@@ -197,6 +202,7 @@ export const updateLeaveStatus = async (req, res) => {
       title: "Leave Status Updated",
       message: `Your leave request has been ${status} by ${FirstName} ${LastName}.`,
       data: { leaveId: leave._id },
+      type: "Personal",
     });
 
     //  Notify all HRs about the update
@@ -209,6 +215,7 @@ export const updateLeaveStatus = async (req, res) => {
       title: "Leave Status Updated",
       message: `${FirstName} ${LastName} has ${status} ${leave.employee.FirstName} ${leave.employee.LastName}'s leave request.`,
       data: { leaveId: leave._id },
+      type: "Personal",
     });
 
     return res.json({ success: true, message: "Leave updated", leave });

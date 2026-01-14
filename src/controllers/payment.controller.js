@@ -61,6 +61,7 @@ export const createPayment = async (req, res) => {
         year,
         status: payment.status,
       },
+      type: "Personal",
     });
 
     //  Notify all ADMINs (if HR created it)
@@ -73,6 +74,7 @@ export const createPayment = async (req, res) => {
         title: "New Salary Record",
         message: `${FirstName} ${LastName} created a salary record for ${empExists.FirstName} ${empExists.LastName} for ${month}-${year}.`,
         data: { paymentId: payment._id },
+        type: "General",
       });
     }
 
@@ -160,6 +162,7 @@ export const updatePayment = async (req, res) => {
         year: updatedPayment.year,
         status: updatedPayment.status,
       },
+      type: "Personal",
     });
 
     //  Notify all ADMINs when a payment is updated (for audit trail)
@@ -171,6 +174,7 @@ export const updatePayment = async (req, res) => {
       title: "Payment Record Updated",
       message: `Payment record for ${updatedPayment.employee.FirstName} ${updatedPayment.employee.LastName} (${updatedPayment.month}-${updatedPayment.year}) has been updated.`,
       data: { paymentId: updatedPayment._id },
+      type: "Personal",
     });
 
     res.status(200).json({
@@ -241,6 +245,7 @@ export const updatePaymentStatus = async (req, res) => {
     await sendNotification({
       recipients: [payment.employee._id],
       title: "Salary Status Update",
+      type: "Personal",
       message: `Your salary for ${payment.month}-${payment.year} has been marked as ${status} by ${FirstName} ${LastName}.`,
       data: {
         paymentId: payment._id,
@@ -264,6 +269,7 @@ export const updatePaymentStatus = async (req, res) => {
           month: payment.month,
           year: payment.year,
         },
+        type: "General",
       });
     }
 
@@ -320,6 +326,7 @@ export const deletePayment = async (req, res) => {
         month: payment.month,
         year: payment.year,
       },
+      type: "Personal",
     });
 
     //  Notify HR & Admins (for audit)
@@ -332,7 +339,7 @@ export const deletePayment = async (req, res) => {
       .filter((uid) => uid !== req.user._id.toString()); // avoid notifying the actor again
 
     if (recipients.length) {
-      await sendNotification({
+      ({
         recipients,
         title: "Payment Deleted",
         message: `${FirstName} ${LastName} deleted the salary record for ${payment.employee.FirstName} ${payment.employee.LastName} (${payment.month}-${payment.year}).`,

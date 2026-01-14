@@ -30,6 +30,7 @@ const createTicket = async (req, res) => {
       data: {
         id: newTicket._id,
       },
+      type: "Personal",
     });
 
     res.status(201).json({ success: true, newTicket });
@@ -105,6 +106,7 @@ const updateTicketStatus = async (req, res) => {
       title: "Ticket acknowledged",
       message: `${FirstName} ${LastName} acknowledged your ticket`,
       data: {},
+      type: "Personal",
     });
 
     res.status(200).json({ success: true });

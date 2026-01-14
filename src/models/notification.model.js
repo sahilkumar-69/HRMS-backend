@@ -7,6 +7,7 @@ const notificationSchema = new Schema(
     message: { type: String, required: true },
     data: { type: Object }, // optional extra info (taskId, leaveId, etc.)
     isRead: { type: Boolean, default: false },
+    type: { type: String, enum: ["Personal", "General"], default: "General" },
   },
   { timestamps: true }
 );

@@ -76,6 +76,7 @@ const addSale = async (req, res) => {
         type,
         budget,
       },
+      type: "Personal",
     });
 
     return res.status(201).json({

@@ -23,6 +23,9 @@ import path from "path";
 import { paymentRoutes } from "./src/routes/payment.routes.js";
 import expenseRoutes from "./src/routes/expense.routes.js";
 import { TicketRoutes } from "./src/routes/ticket.routes.js";
+import "./src/utils/cronScheduler.js";
+import { holidayRouter } from "./src/routes/holiday.routes.js";
+import { authMiddleware } from "./src/middleware/authMiddleware.js";
 
 const app = express();
 
@@ -31,41 +34,48 @@ const server = createServer(app);
 initiateServer(server);
 
 const allowedOrigins = [
-  "https://devnexus-hrms.vercel.app",
-  "https://hrms-devnexus-u6yd.vercel.app",
+  "http://www.hrmsbackend.palgharhome.com",
+  "https://www.hrmsbackend.palgharhome.com",
+  "http://hrms.palgharhome.com",
+  "https://hrms.palgharhome.com",
+  "http://www.hrms.palgharhome.com",
+  "https://www.hrms.palgharhome.com",
+  "http://hrmsbackend.palgharhome.com",
+  "https://hrmsbackend.palgharhome.com",
   "http://localhost:5173",
   "http://localhost:4343",
-  "https://hrms-backend-9qzj.onrender.com/api",
   "http://localhost:5174",
   "http://localhost:5175",
   "http://localhost:5176",
-  "http://localhost:5177",
+  "http://localhost:8909",
 ];
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // Allow requests with no origin (like Postman or curl)
-      if (!origin) return callback(null, true);
+// app.use(
+//   cors({
+//     origin: function (origin, callback) {
+//       // Allow requests with no origin (like Postman or curl)
+//       if (!origin) return callback(null, true);
 
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      } else {
-        return callback(new Error("Not allowed by CORS"));
-      }
-    },
+//       if (allowedOrigins.includes(origin)) {
+//         return callback(null, true);
+//       } else {
+//         return callback(new Error("Not allowed by CORS"));
+//       }
+//     },
 
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "token"],
-    credentials: true,
-  })
-);
+//     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+//     allowedHeaders: ["Content-Type", "Authorization", "token"],
+//     credentials: true,
+//   })
+// );
+
+app.use(cors());
 
 app.set("view engine", "ejs");
 
 app.set("views", path.join(path.resolve(), "/src/views"));
 
-app.use(express.json());
+app.use(express.json({ limit: "15mb" }));
 
 app.use(bodyParser.json());
 
@@ -77,6 +87,9 @@ app.get("/", (req, res) => {
 
 // User related routes
 app.use("/api", Route);
+
+// Holiday related routes
+app.use("/api/holiday", authMiddleware, holidayRouter);
 
 // leave related routes
 app.use("/api/leave", leaveRoute);

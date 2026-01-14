@@ -2,8 +2,11 @@ import { Schema, model } from "mongoose";
 
 const policy_schema = new Schema(
   {
-    public_id: String,
-    secure_url: String,
+    policies: String,
+    updatedAt: {
+      type: Date,
+      default: Date.now,
+    },
   },
   { timestamps: true }
 );

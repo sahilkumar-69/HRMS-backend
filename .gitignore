@@ -1,8 +1,6 @@
 node_modules
- 
 .env
-./learning.html
-test.json
-./script.js
-
+learning.html
+payslip.html
 script.js
+test.json
