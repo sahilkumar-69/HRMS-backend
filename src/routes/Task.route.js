@@ -4,6 +4,7 @@ import {
   createTask,
   deleteTask,
   getTaskById,
+  getTasklist,
   getTasks,
   updateTask,
 } from "../controllers/task.controller.js";
@@ -13,6 +14,8 @@ import { authMiddleware } from "../middleware/authMiddleware.js";
 const TaskRoutes = Router();
 
 TaskRoutes.route("/get-tasks").get(getTasks);
+
+TaskRoutes.route("/task-list").get(authMiddleware, getTasklist);
 
 TaskRoutes.route("/get-task/:id").get(getTaskById);
 

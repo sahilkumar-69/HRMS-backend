@@ -19,8 +19,9 @@ const TaskSchema = new Schema(
       },
     ],
 
-    startDate: { type: Date, default: Date.now() },
-    dueDate: { type: Date, required: true },
+    startDate: { type: Date, default: Date.now },
+    dueDate: { type: Date },
+
     // Assignee is a reference to a User
     assignee: [
       {
@@ -30,6 +31,13 @@ const TaskSchema = new Schema(
       },
     ],
 
+    progress: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100,
+    },
+
     assigner: {
       type: Schema.Types.ObjectId,
       ref: "users",
@@ -38,8 +46,15 @@ const TaskSchema = new Schema(
 
     status: {
       type: String,
-      enum: ["todo", "pending", "in-progress", "review"],
-      default: "todo",
+      enum: [
+        "ASSIGNED",
+        "BLOCKED",
+        "PENDING",
+        "IN_PROGRESS",
+        "COMPLETED",
+        "REVIEWED",
+      ],
+      default: "ASSIGNED",
     },
   },
   { timestamps: true }

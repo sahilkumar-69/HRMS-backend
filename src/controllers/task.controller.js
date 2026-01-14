@@ -116,7 +116,6 @@ const createTask = async (req, res) => {
     });
   }
 };
-
 // Get all tasks (or filter by role/assignee)
 const getTasks = async (req, res) => {
   try {
@@ -141,6 +140,7 @@ const getTasks = async (req, res) => {
       .json({ message: "Error fetching tasks", error: error.message });
   }
 };
+
 const getTaskById = async (req, res) => {
   const { id } = req.params;
   try {
@@ -276,7 +276,6 @@ const updateTask = async (req, res) => {
     });
   }
 };
-
 // Get all tasks assigned to an employee
 const getEmployeeTasks = async (req, res) => {
   try {
@@ -323,12 +322,34 @@ const assignTask = async (taskId, to) => {
   }
 };
 
+const getTasklist = async (req, res) => {
+  try {
+    const taskList = await Task.find({
+      status: { $nin: ["BLOCKED", "COMPLETED"] },
+    }).select("_id title progress status");
+
+    return res.status(200).json({
+      success: true,
+      message: "Task fetched successfully",
+      data: taskList,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+      error,
+    });
+  }
+};
+
+
 export {
   createTask,
   getTasks,
   deleteTask,
   getTaskById,
   updateTask,
+  getTasklist,
   getEmployeeTasks,
   assignTask,
 };
